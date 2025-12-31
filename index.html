@@ -4,13 +4,21 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>lagy.pw</title>
+    <!-- Favicon placeholder -->
     <link rel="icon" type="image/png" href="leci.png">
     
-    <!-- 98.css for the classic window look (scoped to #leci-window) -->
+    <!-- 98.css for the classic window look -->
     <link rel="stylesheet" href="https://unpkg.com/98.css">
     
+    <!-- Tailwind CSS -->
     <script src="https://cdn.tailwindcss.com"></script>
+    
+    <!-- Google Fonts -->
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;800&family=Space+Grotesk:wght@500;700&display=swap" rel="stylesheet">
+    
+    <!-- Model Viewer Library -->
+    <script type="module" src="https://ajax.googleapis.com/ajax/libs/model-viewer/3.4.0/model-viewer.min.js"></script>
+
     <style>
         :root {
             --accent: #EB5939;
@@ -106,38 +114,22 @@
             overflow: hidden;
         }
 
-        /* --- Aggressive UI Cropping for Sketchfab --- */
+        /* --- 3D Viewer Container --- */
         .viewer-card {
             position: relative;
             width: 100%;
             height: 100%;
             min-height: 400px;
-            background: transparent;
+            background: radial-gradient(circle at 50% 50%, rgba(235, 89, 57, 0.05) 0%, transparent 70%);
             border-radius: 24px;
             overflow: hidden; 
-            border: none;
         }
 
-        .model-container {
-            display: none;
+        model-viewer {
             width: 100%;
             height: 100%;
-            position: relative;
-        }
-
-        .model-container.active {
-            display: block;
-        }
-
-        /* Cropping logic: hides the header/footer of the Sketchfab iframe */
-        .model-container iframe {
-            position: absolute;
-            width: 106%; 
-            height: calc(100% + 120px); 
-            top: -60px; 
-            left: -3%; 
-            border: none;
-            pointer-events: all;
+            --poster-color: transparent;
+            outline: none;
         }
 
         .nav-btn {
@@ -148,8 +140,8 @@
             backdrop-filter: blur(10px);
             color: var(--accent);
             border: 1px solid rgba(235, 89, 57, 0.2);
-            width: 40px;
-            height: 40px;
+            width: 44px;
+            height: 44px;
             border-radius: 50%;
             display: flex;
             align-items: center;
@@ -165,18 +157,17 @@
             transform: translateY(-50%) scale(1.1);
         }
 
-        /* Model Link Styling */
         .model-link {
             position: absolute;
-            top: 20px;
-            left: 20px;
+            top: 24px;
+            left: 24px;
             z-index: 50;
-            background: rgba(12, 10, 9, 0.6);
-            backdrop-filter: blur(8px);
+            background: rgba(12, 10, 9, 0.7);
+            backdrop-filter: blur(12px);
             border: 1px solid rgba(183, 171, 152, 0.1);
-            padding: 6px 12px;
+            padding: 8px 16px;
             border-radius: 12px;
-            font-size: 10px;
+            font-size: 11px;
             font-weight: 700;
             text-transform: uppercase;
             letter-spacing: 0.1em;
@@ -184,7 +175,7 @@
             transition: all 0.3s ease;
             display: flex;
             align-items: center;
-            gap: 6px;
+            gap: 8px;
         }
 
         .model-link:hover {
@@ -205,8 +196,8 @@
         }
 
         .dot {
-            width: 5px;
-            height: 5px;
+            width: 6px;
+            height: 6px;
             background: rgba(183, 171, 152, 0.2);
             border-radius: 50%;
             transition: all 0.3s ease;
@@ -214,7 +205,7 @@
 
         .dot.active {
             background: var(--accent);
-            width: 15px;
+            width: 20px;
             border-radius: 10px;
         }
 
@@ -226,19 +217,12 @@
             width: 300px;
             z-index: 9999;
             display: none;
-            box-shadow: 4px 4px 10px rgba(0,0,0,0.5);
+            box-shadow: 4px 4px 20px rgba(0,0,0,0.8);
             color: black;
             text-align: left;
-            will-change: transform, top, left, width, height;
             min-width: 150px;
             min-height: 150px;
             box-sizing: border-box;
-        }
-
-        #leci-window .title-bar-controls button {
-            background-color: #c0c0c0 !important;
-            min-width: 16px !important;
-            min-height: 14px !important;
         }
 
         .window-body {
@@ -275,14 +259,8 @@
             transform: none !important;
         }
 
-        #leci-window.maximized .window-body {
-            height: calc(100vh - 30px);
-            align-items: center;
-            justify-content: center;
-        }
-
         /* Logo Slot logic */
-        .logo-container { cursor: text !important; user-select: text; }
+        .logo-container { cursor: text !important; }
         #pw-text { cursor: text !important; display: inline-block; }
         .pw-slot {
             display: inline-flex;
@@ -311,6 +289,7 @@
 </head>
 <body>
 
+    <!-- Secret Leci Window -->
     <div class="window" id="leci-window">
         <div class="title-bar" id="leci-handle">
             <div class="title-bar-text">leci.exe</div>
@@ -320,11 +299,12 @@
             </div>
         </div>
         <div class="window-body">
-            <img src="leci.png" alt="Leci">
+            <img src="leci.png" alt="Leci" onerror="this.src='https://via.placeholder.com/150/808080/FFFFFF?text=LECI.EXE'">
         </div>
     </div>
 
     <div class="dashboard-container">
+        <!-- Header -->
         <header class="flex justify-between items-center glass rounded-2xl px-6 py-3 relative z-50">
             <div class="flex items-center gap-6">
                 <div class="logo-container text-xl font-extrabold font-heading tracking-tighter flex items-center text-[#B7AB98]">
@@ -343,8 +323,9 @@
             </div>
         </header>
 
+        <!-- Main Workspace -->
         <main class="grid grid-cols-1 lg:grid-cols-2 gap-8">
-            <!-- Left Side Links -->
+            <!-- Left Column: Assets -->
             <div class="flex flex-col gap-4">
                 <div class="flex items-center gap-3 px-2">
                     <div class="w-8 h-8 flex items-center justify-center rounded-lg bg-[#EB5939]/10 text-[#EB5939]">
@@ -358,7 +339,7 @@
                         <div class="text-[9px] uppercase tracking-widest opacity-50 font-bold">Project Folder</div>
                         <h3 class="text-lg font-bold font-heading text-[#B7AB98]">Primary Workspace</h3>
                         <div class="text-[#EB5939] text-[10px] font-bold flex items-center gap-2 group mt-4">
-                            ACCESS <svg class="w-3 h-3 group-hover:translate-x-1 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path d="M14 5l7 7m0 0l-7 7m7-7H3"/></svg>
+                            ACCESS <svg class="w-3 h-3 group-hover:translate-x-1 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M14 5l7 7m0 0l-7 7m7-7H3"/></svg>
                         </div>
                     </a>
 
@@ -366,7 +347,7 @@
                         <div class="text-[9px] uppercase tracking-widest opacity-50 font-bold">Spreadsheet</div>
                         <h3 class="text-lg font-bold font-heading text-[#B7AB98]">Finance</h3>
                         <div class="text-[#EB5939] text-[10px] font-bold flex items-center gap-2 mt-4">
-                            ACCESS <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path d="M14 5l7 7m0 0l-7 7m7-7H3"/></svg>
+                            ACCESS <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M14 5l7 7m0 0l-7 7m7-7H3"/></svg>
                         </div>
                     </a>
 
@@ -374,52 +355,50 @@
                         <div class="text-[9px] uppercase tracking-widest opacity-50 font-bold">Database</div>
                         <h3 class="text-lg font-bold font-heading text-[#B7AB98]">Main User Records & Documentation</h3>
                         <div class="text-[#EB5939] text-[10px] font-bold flex items-center gap-2 mt-4">
-                            ACCESS <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path d="M14 5l7 7m0 0l-7 7m7-7H3"/></svg>
+                            ACCESS <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M14 5l7 7m0 0l-7 7m7-7H3"/></svg>
                         </div>
                     </a>
                 </div>
             </div>
 
-            <!-- Right Side: 3D Models -->
+            <!-- Right Column: 3D Showcase -->
             <div class="flex flex-col gap-4">
                 <div class="flex items-center gap-3 px-2">
                     <div class="w-8 h-8 flex items-center justify-center rounded-lg bg-[#EB5939]/10 text-[#EB5939]">
-                        <svg class="w-4 h-4" fill="currentColor" viewBox="0 0 24 24"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm0 18c-4.41 0-8-3.59-8-8s3.59-8 8-8 8 3.59 8 8-3.59 8-8 8z"/></svg>
+                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M14 10l-2 1m0 0l-2-1m2 1v2.5M20 7l-2 1m2-1l-2-1m2 1v2.5M14 4l-2-1-2 1M4 7l2-1M4 7l2 1M4 7v2.5M12 21l-2-1m2 1l2-1m-2 1v-2.5M6 18l-2-1v-2.5M18 18l2-1v-2.5"></path></svg>
                     </div>
                     <h2 class="text-sm font-bold font-heading uppercase tracking-widest opacity-70 text-[#EB5939]">3D Model Showcase</h2>
                 </div>
 
                 <div class="flex-1 glass rounded-3xl overflow-hidden relative">
                     <div class="viewer-card">
-                        <!-- Navigation Buttons -->
-                        <button class="nav-btn" style="left: 10px;" onclick="changeModel(-1)">
+                        <!-- Navigation -->
+                        <button class="nav-btn" style="left: 20px;" onclick="changeModel(-1)">
                             <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><path d="m15 18-6-6 6-6"/></svg>
                         </button>
-                        <button class="nav-btn" style="right: 10px;" onclick="changeModel(1)">
+                        <button class="nav-btn" style="right: 20px;" onclick="changeModel(1)">
                             <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><path d="m9 18 6-6-6-6"/></svg>
                         </button>
 
-                        <!-- Dynamic External Link -->
+                        <!-- External Source Link -->
                         <a href="https://sketchfab.com/models/e4bd96d6890f42c5a2bc3e31cf04b22e" target="_blank" id="model-source-link" class="model-link">
                             <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14"></path></svg>
                             <span>Windah</span>
                         </a>
 
-                        <!-- Windah Model -->
-                        <div class="model-container active">
-                            <iframe title="Windah" allowfullscreen allow="autoplay; fullscreen; xr-spatial-tracking" src="https://sketchfab.com/models/e4bd96d6890f42c5a2bc3e31cf04b22e/embed?autostart=1&transparent=1&ui_hint=0&ui_help=0&ui_infos=0&ui_controls=0&ui_watermark=0"></iframe>
-                        </div>
-
-                        <!-- Other Models -->
-                        <div class="model-container">
-                            <iframe title="White Logitech G305" allowfullscreen allow="autoplay; fullscreen; xr-spatial-tracking" src="https://sketchfab.com/models/be26b2d7187f49459cfeef60c7c3272e/embed?autostart=1&transparent=1&ui_hint=0&ui_help=0&ui_infos=0&ui_controls=0&ui_watermark=0"></iframe>
-                        </div>
-                        <div class="model-container">
-                            <iframe title="Adora" allowfullscreen allow="autoplay; fullscreen; xr-spatial-tracking" src="https://sketchfab.com/models/6245ebf1e017400ca4277595f7406fa4/embed?autostart=1&transparent=1&ui_hint=0&ui_help=0&ui_infos=0&ui_controls=0&ui_watermark=0"></iframe>
-                        </div>
-                        <div class="model-container">
-                            <iframe title="Roblox Egg belly dance" allowfullscreen allow="autoplay; fullscreen; xr-spatial-tracking" src="https://sketchfab.com/models/a58b68b488c2415c8b600c96bfbba1e0/embed?autostart=1&transparent=1&ui_hint=0&ui_help=0&ui_infos=0&ui_controls=0&ui_watermark=0"></iframe>
-                        </div>
+                        <!-- THE 3D VIEWER -->
+                        <model-viewer 
+                            id="main-viewer"
+                            src="windah.glb" 
+                            alt="3D Model"
+                            auto-rotate 
+                            camera-controls 
+                            shadow-intensity="1"
+                            environment-image="neutral"
+                            exposure="1"
+                            interaction-prompt="none"
+                            touch-action="pan-y">
+                        </model-viewer>
 
                         <!-- Progress Indicators -->
                         <div class="indicator-container">
@@ -433,6 +412,7 @@
             </div>
         </main>
 
+        <!-- Footer -->
         <footer class="flex justify-between items-center px-6">
             <div class="opacity-50 text-[9px] uppercase tracking-[0.4em] font-black text-[#B7AB98]">
                 @zylorey
@@ -445,36 +425,40 @@
         function updateClock() {
             const now = new Date();
             const timeString = now.toLocaleTimeString('en-US', { hour12: false });
-            document.getElementById('clock').textContent = timeString;
+            const clockEl = document.getElementById('clock');
+            if (clockEl) clockEl.textContent = timeString;
         }
         setInterval(updateClock, 1000);
         updateClock();
 
-        // Model Switcher Logic
+        // 3D Model Switcher Logic
         let currentIndex = 0;
-        const models = document.querySelectorAll('.model-container');
+        const viewer = document.getElementById('main-viewer');
         const dots = document.querySelectorAll('.dot');
         const sourceLink = document.getElementById('model-source-link');
 
         const modelMetadata = [
-            { name: "Windah", url: "https://sketchfab.com/models/e4bd96d6890f42c5a2bc3e31cf04b22e" },
-            { name: "Logitech G305", url: "https://sketchfab.com/models/be26b2d7187f49459cfeef60c7c3272e" },
-            { name: "Adora", url: "https://sketchfab.com/models/6245ebf1e017400ca4277595f7406fa4" },
-            { name: "Roblox Egg", url: "https://sketchfab.com/models/a58b68b488c2415c8b600c96bfbba1e0" }
+            { name: "Windah", file: "windah.glb", url: "https://sketchfab.com/models/e4bd96d6890f42c5a2bc3e31cf04b22e" },
+            { name: "Logitech G305", file: "g305.glb", url: "https://sketchfab.com/models/be26b2d7187f49459cfeef60c7c3272e" },
+            { name: "Adora", file: "adora.glb", url: "https://sketchfab.com/models/6245ebf1e017400ca4277595f7406fa4" },
+            { name: "Roblox Egg", file: "roblox_egg_belly_dance.glb", url: "https://sketchfab.com/models/a58b68b488c2415c8b600c96bfbba1e0" }
         ];
 
         function changeModel(direction) {
-            models[currentIndex].classList.remove('active');
             dots[currentIndex].classList.remove('active');
             
-            currentIndex = (currentIndex + direction + models.length) % models.length;
+            currentIndex = (currentIndex + direction + modelMetadata.length) % modelMetadata.length;
             
-            models[currentIndex].classList.add('active');
+            const current = modelMetadata[currentIndex];
+            
+            // Update the viewer source
+            viewer.src = current.file;
+            viewer.alt = `3D model of ${current.name}`;
+            
+            // UI Updates
             dots[currentIndex].classList.add('active');
-            
-            // Update the link text and href
-            sourceLink.querySelector('span').textContent = modelMetadata[currentIndex].name;
-            sourceLink.href = modelMetadata[currentIndex].url;
+            sourceLink.querySelector('span').textContent = current.name;
+            sourceLink.href = current.url;
         }
 
         // Secret Terminal Logic
@@ -486,7 +470,7 @@
         const handle = document.getElementById('leci-handle');
 
         pwText.addEventListener('click', (e) => {
-            if (e.detail === 3) {
+            if (e.detail === 3) { // Triple click
                 e.preventDefault();
                 pwText.style.display = 'none';
                 pwInput.style.display = 'inline-block';
@@ -500,17 +484,17 @@
                 if (pwInput.value.toLowerCase() === 'leci') {
                     leciWindow.style.display = 'block';
                 }
-                pwInput.style.display = 'none';
-                pwText.style.display = 'inline-block';
-                pwInput.value = '';
+                resetInput();
             }
         });
 
-        pwInput.addEventListener('blur', () => {
+        pwInput.addEventListener('blur', resetInput);
+
+        function resetInput() {
             pwInput.style.display = 'none';
             pwText.style.display = 'inline-block';
             pwInput.value = '';
-        });
+        }
 
         closeBtn.addEventListener('click', (e) => {
             e.stopPropagation();
@@ -534,6 +518,7 @@
                 leciWindow.style.left = (e.clientX - initialX) + 'px';
                 leciWindow.style.top = (e.clientY - initialY) + 'px';
             }
+            // Glow effect
             const gx = (e.clientX / window.innerWidth) * 100;
             const gy = (e.clientY / window.innerHeight) * 100;
             document.body.style.backgroundImage = `radial-gradient(circle at ${gx}% ${gy}%, rgba(235, 89, 57, 0.03) 0%, transparent 40%)`;
@@ -549,6 +534,3 @@
     </script>
 </body>
 </html>
-
-
-
