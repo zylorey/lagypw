@@ -28,8 +28,21 @@
             overflow: hidden; 
             height: 100vh;
             width: 100vw;
-            position: fixed; /* Prevents bounce and extra scroll */
+            position: fixed;
         }
+
+        /* --- Page Load Animations --- */
+        @keyframes pageIn {
+            from { opacity: 0; transform: translateY(15px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        header, main, footer {
+            opacity: 0;
+            animation: pageIn 0.8s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+        }
+        main { animation-delay: 0.15s; }
+        footer { animation-delay: 0.3s; }
 
         .font-heading { font-family: 'Space Grotesk', sans-serif; }
         
@@ -93,7 +106,6 @@
             overflow: hidden;
         }
 
-        /* Secret Mode Styles */
         .logo-container {
             cursor: text !important;
             user-select: text;
@@ -128,7 +140,6 @@
             cursor: text;
         }
 
-        /* Windows 98 Secret Container isolation */
         #leci-window {
             position: fixed;
             top: 20%;
@@ -139,21 +150,38 @@
             box-shadow: 4px 4px 10px rgba(0,0,0,0.5);
             color: black;
             text-align: left;
-            will-change: transform, top, left; /* Performance hint for smooth dragging */
+            will-change: transform, top, left, width, height;
+            min-width: 150px;
+            min-height: 150px;
+            box-sizing: border-box;
         }
 
-        /* Standard 98.css buttons often require specific background rendering */
         #leci-window .title-bar-controls button {
             background-color: #c0c0c0 !important;
             min-width: 16px !important;
             min-height: 14px !important;
         }
 
+        .window-body {
+            margin: 0;
+            display: flex;
+            flex-direction: column;
+            height: calc(100% - 30px);
+            padding: 8px;
+            box-sizing: border-box;
+            background: #c0c0c0;
+            overflow: hidden;
+        }
+
         .window-body img {
             width: 100%;
             height: auto;
+            max-height: 100%;
             display: block;
             image-rendering: pixelated;
+            object-fit: contain;
+            pointer-events: none;
+            flex-grow: 1;
         }
 
         .title-bar {
@@ -165,7 +193,6 @@
             cursor: grabbing;
         }
 
-        /* Maximize state styles */
         #leci-window.maximized {
             top: 0 !important;
             left: 0 !important;
@@ -176,20 +203,11 @@
         }
 
         #leci-window.maximized .window-body {
-            height: calc(100vh - 35px);
-            overflow: hidden; /* Disable scroll in maximized view */
-            display: flex;
-            flex-direction: column;
+            height: calc(100vh - 30px);
             align-items: center;
             justify-content: center;
         }
 
-        #leci-window.maximized .window-body img {
-            max-height: 80vh;
-            width: auto;
-        }
-
-        /* Ensure 98.css doesn't affect standard buttons in dashboard */
         button:not(.title-bar-controls button) {
             all: unset;
             cursor: pointer;
@@ -198,7 +216,6 @@
 </head>
 <body>
 
-    <!-- Windows 98 Draggable Window -->
     <div class="window" id="leci-window">
         <div class="title-bar" id="leci-handle">
             <div class="title-bar-text">leci.exe</div>
@@ -209,12 +226,10 @@
         </div>
         <div class="window-body">
             <img src="leci.png" alt="Leci">
-            <p style="margin-top: 8px; font-size: 11px; text-align: center; color: black; font-family: 'MS Sans Serif', Arial, sans-serif;">Authorized personnel only.</p>
         </div>
     </div>
 
     <div class="dashboard-container">
-        <!-- Top Bar -->
         <header class="flex justify-between items-center glass rounded-2xl px-6 py-3 relative z-50">
             <div class="flex items-center gap-6">
                 <div class="logo-container text-xl font-extrabold font-heading tracking-tighter flex items-center text-[#B7AB98]">
@@ -233,9 +248,7 @@
             </div>
         </header>
 
-        <!-- Main Grid -->
         <main class="grid grid-cols-1 lg:grid-cols-2 gap-8">
-            <!-- Left Panel -->
             <div class="flex flex-col gap-4">
                 <div class="flex items-center gap-3 px-2">
                     <div class="w-8 h-8 flex items-center justify-center rounded-lg bg-[#EB5939]/10 text-[#EB5939]">
@@ -271,7 +284,6 @@
                 </div>
             </div>
 
-            <!-- Right Panel -->
             <div class="flex flex-col gap-4">
                 <div class="flex items-center gap-3 px-2">
                     <div class="w-8 h-8 flex items-center justify-center rounded-lg bg-[#EB5939]/10 text-[#EB5939]">
@@ -308,7 +320,6 @@
             </div>
         </main>
 
-        <!-- Bottom Bar -->
         <footer class="flex justify-between items-center px-6">
             <div class="opacity-20 text-[9px] uppercase tracking-[0.4em] font-black text-[#B7AB98]">
                 @zylorey
@@ -317,7 +328,7 @@
     </div>
 
     <script>
-        // Real-time Clock
+        // Clock Logic
         function updateClock() {
             const now = new Date();
             const timeString = now.toLocaleTimeString('en-US', { hour12: false });
@@ -326,14 +337,14 @@
         setInterval(updateClock, 1000);
         updateClock();
 
-        // Secret Logo Interaction
         const pwText = document.getElementById('pw-text');
         const pwInput = document.getElementById('pw-input');
         const leciWindow = document.getElementById('leci-window');
         const closeBtn = document.getElementById('close-leci');
         const maximizeBtn = document.getElementById('maximize-leci');
+        const handle = document.getElementById('leci-handle');
 
-        // Triple Click reveal
+        // Secret Entry
         pwText.addEventListener('click', (e) => {
             if (e.detail === 3) {
                 e.preventDefault();
@@ -344,7 +355,6 @@
             }
         });
 
-        // Input logic
         pwInput.addEventListener('keydown', (e) => {
             if (e.key === 'Enter') {
                 if (pwInput.value.toLowerCase() === 'leci') {
@@ -362,97 +372,146 @@
             pwInput.value = '';
         });
 
-        // Close window logic
         closeBtn.addEventListener('click', (e) => {
             e.stopPropagation();
             leciWindow.style.display = 'none';
-            if(leciWindow.classList.contains('maximized')) {
-                toggleMaximize();
-            }
+            if(leciWindow.classList.contains('maximized')) toggleMaximize();
         });
 
-        // Maximize/Restore Toggle Logic
-        let savedPos = { top: '20%', left: '20%', width: '300px' };
-        
+        let savedPos = { top: '20%', left: '20%', width: '300px', height: 'auto' };
         function toggleMaximize() {
             if (leciWindow.classList.contains('maximized')) {
                 leciWindow.classList.remove('maximized');
                 leciWindow.style.top = savedPos.top;
                 leciWindow.style.left = savedPos.left;
                 leciWindow.style.width = savedPos.width;
+                leciWindow.style.height = savedPos.height;
                 maximizeBtn.setAttribute('aria-label', 'Maximize');
-                document.body.style.overflow = 'hidden'; 
             } else {
                 savedPos = {
                     top: leciWindow.style.top || '20%',
                     left: leciWindow.style.left || '20%',
-                    width: leciWindow.style.width || '300px'
+                    width: leciWindow.style.width || '300px',
+                    height: leciWindow.style.height || 'auto'
                 };
                 leciWindow.classList.add('maximized');
                 maximizeBtn.setAttribute('aria-label', 'Restore');
-                document.body.style.overflow = 'hidden'; 
             }
         }
+        maximizeBtn.addEventListener('click', (e) => { e.stopPropagation(); toggleMaximize(); });
 
-        maximizeBtn.addEventListener('click', (e) => {
-            e.stopPropagation();
-            toggleMaximize();
+        // --- Dragging and Resizing Logic ---
+        let isDragging = false;
+        let isResizing = false;
+        let resizeDir = '';
+        let initialX, initialY, initialW, initialH, initialT, initialL;
+        const BORDER_SIZE = 8;
+        const MIN_SIZE = 150;
+
+        // Cursor logic
+        document.addEventListener('mousemove', (e) => {
+            if (isResizing || isDragging || !leciWindow.style.display || leciWindow.style.display === 'none' || leciWindow.classList.contains('maximized')) return;
+            
+            const rect = leciWindow.getBoundingClientRect();
+            const x = e.clientX - rect.left;
+            const y = e.clientY - rect.top;
+            
+            let dir = '';
+            if (y > BORDER_SIZE) { 
+                if (y > rect.height - BORDER_SIZE) dir += 's';
+                if (x < BORDER_SIZE) dir += 'w';
+                else if (x > rect.width - BORDER_SIZE) dir += 'e';
+            }
+
+            if (dir === 's') leciWindow.style.cursor = 'ns-resize';
+            else if (dir === 'w' || dir === 'e') leciWindow.style.cursor = 'ew-resize';
+            else if (dir === 'sw' || dir === 'ne') leciWindow.style.cursor = 'nesw-resize';
+            else if (dir === 'se' || dir === 'nw') leciWindow.style.cursor = 'nwse-resize';
+            else leciWindow.style.cursor = 'default';
         });
 
-        // Optimized Smooth Draggable Logic
-        let isDragging = false;
-        let currentX;
-        let currentY;
-        let initialX;
-        let initialY;
-        let xOffset = 0;
-        let yOffset = 0;
-        
-        const handle = document.getElementById('leci-handle');
-
-        handle.addEventListener('mousedown', dragStart);
-        document.addEventListener('mousemove', drag);
-        document.addEventListener('mouseup', dragEnd);
-
-        function dragStart(e) {
+        leciWindow.addEventListener('mousedown', (e) => {
             if (leciWindow.classList.contains('maximized')) return;
-            if (e.target.tagName === 'BUTTON') return;
+            const rect = leciWindow.getBoundingClientRect();
+            const x = e.clientX - rect.left;
+            const y = e.clientY - rect.top;
 
-            // Get current positions if already moved
+            let dir = '';
+            if (y > 30) { 
+                if (y > rect.height - BORDER_SIZE) dir += 's';
+                if (x < BORDER_SIZE) dir += 'w';
+                else if (x > rect.width - BORDER_SIZE) dir += 'e';
+            }
+
+            if (dir) {
+                isResizing = true;
+                resizeDir = dir;
+                initialX = e.clientX;
+                initialY = e.clientY;
+                initialW = rect.width;
+                initialH = rect.height;
+                initialT = rect.top;
+                initialL = rect.left;
+                e.preventDefault();
+            }
+        });
+
+        handle.addEventListener('mousedown', (e) => {
+            if (leciWindow.classList.contains('maximized') || e.target.tagName === 'BUTTON') return;
+            isDragging = true;
             const rect = leciWindow.getBoundingClientRect();
             initialX = e.clientX - rect.left;
             initialY = e.clientY - rect.top;
+        });
 
-            isDragging = true;
-        }
-
-        function drag(e) {
+        document.addEventListener('mousemove', (e) => {
             if (isDragging) {
-                e.preventDefault();
+                let nextX = e.clientX - initialX;
+                let nextY = e.clientY - initialY;
+                const rect = leciWindow.getBoundingClientRect();
+                nextX = Math.max(0, Math.min(nextX, window.innerWidth - rect.width));
+                nextY = Math.max(0, Math.min(nextY, window.innerHeight - rect.height));
+                leciWindow.style.left = nextX + 'px';
+                leciWindow.style.top = nextY + 'px';
+            } else if (isResizing) {
+                const dx = e.clientX - initialX;
+                const dy = e.clientY - initialY;
                 
-                currentX = e.clientX - initialX;
-                currentY = e.clientY - initialY;
+                if (resizeDir.includes('e')) {
+                    const newW = Math.max(MIN_SIZE, initialW + dx);
+                    if (initialL + newW <= window.innerWidth) {
+                        leciWindow.style.width = newW + 'px';
+                        if (!resizeDir.includes('s')) leciWindow.style.height = initialH + 'px';
+                    }
+                }
+                
+                if (resizeDir.includes('w')) {
+                    const newW = Math.max(MIN_SIZE, initialW - dx);
+                    const newL = initialL + (initialW - newW);
+                    if (newL >= 0) {
+                        leciWindow.style.width = newW + 'px';
+                        leciWindow.style.left = newL + 'px';
+                        if (!resizeDir.includes('s')) leciWindow.style.height = initialH + 'px';
+                    }
+                }
 
-                // Use requestAnimationFrame for high performance 60fps movement
-                requestAnimationFrame(() => {
-                    leciWindow.style.left = currentX + 'px';
-                    leciWindow.style.top = currentY + 'px';
-                });
+                if (resizeDir.includes('s')) {
+                    const newH = Math.max(MIN_SIZE, initialH + dy);
+                    if (initialT + newH <= window.innerHeight) {
+                        leciWindow.style.height = newH + 'px';
+                    }
+                }
             }
-
-            // Independent Mouse Glow logic
+            
             const gx = (e.clientX / window.innerWidth) * 100;
             const gy = (e.clientY / window.innerHeight) * 100;
             document.body.style.backgroundImage = `radial-gradient(circle at ${gx}% ${gy}%, rgba(235, 89, 57, 0.03) 0%, transparent 40%)`;
-        }
+        });
 
-        function dragEnd() {
+        document.addEventListener('mouseup', () => {
             isDragging = false;
-        }
-
+            isResizing = false;
+        });
     </script>
 </body>
-
 </html>
-
-
