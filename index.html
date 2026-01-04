@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>zylorey | Digital Hub</title>
+    <title> lagy.pw</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
     
@@ -28,7 +28,7 @@
             height: 100vh;
         }
 
-        /* 3D Model Styling */
+        /* 3D Model Styling with Fade-in Capability */
         model-viewer {
             position: fixed;
             top: 0;
@@ -39,6 +39,15 @@
             --poster-color: transparent;
             background-color: var(--bg-dark);
             pointer-events: none;
+            
+            /* Initial state for fade-in */
+            opacity: 0;
+            transition: opacity 1.5s ease-out;
+        }
+
+        /* Class added via JS when loaded */
+        model-viewer.is-loaded {
+            opacity: 1;
         }
 
         .font-heading { font-family: 'Space Grotesk', sans-serif; }
@@ -113,7 +122,7 @@
 </head>
 <body class="min-h-screen flex flex-col">
 
-    <!-- Model Viewer dengan Logika Orbit yang Diperbarui -->
+    <!-- Model Viewer with initial opacity 0 -->
     <model-viewer 
         id="mouse-model"
         src="g305.glb" 
@@ -127,13 +136,11 @@
 
     <div class="glass-overlay"></div>
 
-    <!-- Reduced padding-top from pt-48 to pt-24 to move the header significantly higher -->
     <main class="flex-1 flex flex-col items-center justify-center pt-24 px-6 max-w-4xl mx-auto w-full relative z-10">
         <header class="text-center mb-12 animate-fade">
             <h1 class="text-7xl md:text-9xl font-heading chrome-title">zylorey</h1>
         </header>
 
-        <!-- Grid tombol diturunkan -->
         <div class="w-full grid grid-cols-2 sm:grid-cols-4 gap-8 animate-fade" style="animation-delay: 0.2s;">
             <a href="https://x.com" target="_blank" class="glass-card group">
                 <i class="fa-brands fa-square-x-twitter icon-glow"></i>
@@ -157,7 +164,12 @@
     <script>
         const modelViewer = document.querySelector('#mouse-model');
 
-        // Logika agar model mengikuti kursor
+        // Fade in the model when it's fully loaded
+        modelViewer.addEventListener('load', () => {
+            modelViewer.classList.add('is-loaded');
+        });
+
+        // Mouse tracking logic for model orbit
         window.addEventListener('mousemove', (e) => {
             const xPercent = (e.clientX / window.innerWidth) - 0.5;
             const yPercent = (e.clientY / window.innerHeight) - 0.5;
@@ -168,7 +180,7 @@
             modelViewer.cameraOrbit = `${orbitX}deg ${orbitY}deg 105%`;
         });
 
-        // Efek spotlight pada kartu glass
+        // Spotlight effect on glass cards
         document.querySelectorAll('.glass-card').forEach(card => {
             card.addEventListener('mousemove', (e) => {
                 const rect = card.getBoundingClientRect();
