@@ -7,18 +7,14 @@
     <link rel="icon" type="image/png" href="leci.png">
     <script src="https://cdn.tailwindcss.com"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
-    
     <script type="module" src="https://ajax.googleapis.com/ajax/libs/model-viewer/3.4.0/model-viewer.min.js"></script>
-
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600&family=Space+Grotesk:wght@300;700&display=swap');
-
         :root {
             --bg-dark: #070707;
             --glass-surface: rgba(255, 255, 255, 0.05);
             --glass-border: rgba(255, 255, 255, 0.12);
         }
-
         body {
             background-color: var(--bg-dark);
             color: #fafafa;
@@ -29,7 +25,6 @@
             user-select: none;
             -webkit-user-select: none;
         }
-
         model-viewer {
             position: fixed;
             top: 0;
@@ -43,13 +38,10 @@
             opacity: 0;
             transition: opacity 1.5s ease-out;
         }
-
         model-viewer.is-loaded {
             opacity: 1;
         }
-
         .font-heading { font-family: 'Space Grotesk', sans-serif; }
-
         .glass-overlay {
             position: fixed;
             top: 0;
@@ -60,7 +52,6 @@
             pointer-events: none;
             background: radial-gradient(circle at center, transparent 20%, rgba(7, 7, 7, 0.8) 100%);
         }
-
         .glass-card {
             background: var(--glass-surface);
             backdrop-filter: blur(16px) saturate(180%);
@@ -76,14 +67,12 @@
             z-index: 10;
             box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.37);
         }
-
         .glass-card:hover {
             background: rgba(255, 255, 255, 0.1);
             border-color: rgba(255, 255, 255, 0.3);
             transform: translateY(-10px) scale(1.05);
             box-shadow: 0 15px 45px rgba(255, 255, 255, 0.05);
         }
-
         .chrome-title {
             background: linear-gradient(to bottom, #fff 40%, #555 100%);
             -webkit-background-clip: text;
@@ -94,23 +83,19 @@
             filter: drop-shadow(0 10px 10px rgba(0,0,0,0.5));
             padding-bottom: 0.1em;
         }
-
         .icon-glow {
             transition: all 0.4s ease;
             color: #ffffff !important;
             opacity: 0.7;
             font-size: 2.5rem;
         }
-
         .glass-card:hover .icon-glow {
             opacity: 1;
             filter: drop-shadow(0 0 20px rgba(255,255,255,0.6));
         }
-
         .animate-fade {
             animation: fadeIn 1.2s forwards cubic-bezier(0.16, 1, 0.3, 1);
         }
-
         @keyframes fadeIn {
             from { opacity: 0; transform: translateY(20px); }
             to { opacity: 1; transform: translateY(0); }
@@ -118,7 +103,6 @@
     </style>
 </head>
 <body class="min-h-screen flex flex-col">
-
     <model-viewer 
         id="mouse-model"
         src="g305.glb" 
@@ -130,14 +114,11 @@
         exposure="1.2"
         loading="eager">
     </model-viewer>
-
     <div class="glass-overlay"></div>
-
     <main class="flex-1 flex flex-col items-center justify-center pt-24 px-6 max-w-4xl mx-auto w-full relative z-10">
         <header class="text-center mb-12 animate-fade">
             <h1 class="text-7xl md:text-9xl font-heading chrome-title">zylorey</h1>
         </header>
-
         <div class="w-full grid grid-cols-2 sm:grid-cols-4 gap-8 animate-fade" style="animation-delay: 0.2s;">
             <a href="https://x.com/Zylorey" target="_blank" class="glass-card group">
                 <i class="fa-brands fa-square-x-twitter icon-glow"></i>
@@ -153,11 +134,9 @@
             </a>
         </div>
     </main>
-
     <footer class="py-12 text-center opacity-30 hover:opacity-100 transition-all animate-fade relative z-10" style="animation-delay: 0.4s;">
-        <p class="text-[10px] uppercase tracking-[1em]">zylorey 2026</p>
+        <p class="text-[10px] uppercase tracking-[1em]">ㅤ</p>
     </footer>
-
     <script>
         const modelViewer = document.querySelector('#mouse-model');
 
@@ -166,7 +145,6 @@
             modelViewer.pause();
             modelViewer.currentTime = 0;
         });
-
         const triggerClickAnimation = (side) => {
             if (modelViewer.availableAnimations.includes(side)) {
                 modelViewer.pause();
@@ -177,12 +155,10 @@
                 }, 10);
             }
         };
-
         window.addEventListener('mousedown', (e) => {
             if (e.button === 0) triggerClickAnimation('left');
             if (e.button === 2) triggerClickAnimation('right');
         });
-
         window.addEventListener('contextmenu', (e) => e.preventDefault());
 
         window.addEventListener('mousemove', (e) => {
@@ -190,7 +166,6 @@
             const yPercent = (e.clientY / window.innerHeight) - 0.5;
             modelViewer.cameraOrbit = `${-xPercent * 80}deg ${100 - (yPercent * 30)}deg 105%`;
         });
-
         document.querySelectorAll('.glass-card').forEach(card => {
             card.addEventListener('mousemove', (e) => {
                 const rect = card.getBoundingClientRect();
@@ -200,7 +175,6 @@
                 card.style.background = `rgba(255, 255, 255, 0.05)`;
             });
         });
-
         modelViewer.addEventListener('finished', () => {
             modelViewer.pause();
             modelViewer.currentTime = 0;
