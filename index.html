@@ -3,11 +3,11 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title> lagy.pw</title>
+    <title>lagy.pw</title>
+    <link rel="icon" type="image/png" href="leci.png">
     <script src="https://cdn.tailwindcss.com"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
     
-    <!-- Google Model Viewer Library -->
     <script type="module" src="https://ajax.googleapis.com/ajax/libs/model-viewer/3.4.0/model-viewer.min.js"></script>
 
     <style>
@@ -26,9 +26,10 @@
             overflow: hidden;
             margin: 0;
             height: 100vh;
+            user-select: none;
+            -webkit-user-select: none;
         }
 
-        /* 3D Model Styling with Fade-in Capability */
         model-viewer {
             position: fixed;
             top: 0;
@@ -39,13 +40,10 @@
             --poster-color: transparent;
             background-color: var(--bg-dark);
             pointer-events: none;
-            
-            /* Initial state for fade-in */
             opacity: 0;
             transition: opacity 1.5s ease-out;
         }
 
-        /* Class added via JS when loaded */
         model-viewer.is-loaded {
             opacity: 1;
         }
@@ -63,7 +61,7 @@
             background: radial-gradient(circle at center, transparent 20%, rgba(7, 7, 7, 0.8) 100%);
         }
 
-        /* Blown Glass Buttons */
+        /* Box shadow and base card styling */
         .glass-card {
             background: var(--glass-surface);
             backdrop-filter: blur(16px) saturate(180%);
@@ -80,6 +78,7 @@
             box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.37);
         }
 
+        /* Hover transformations and shadow expansion */
         .glass-card:hover {
             background: rgba(255, 255, 255, 0.1);
             border-color: rgba(255, 255, 255, 0.3);
@@ -87,6 +86,7 @@
             box-shadow: 0 15px 45px rgba(255, 255, 255, 0.05);
         }
 
+        /* Chrome title with padding */
         .chrome-title {
             background: linear-gradient(to bottom, #fff 40%, #555 100%);
             -webkit-background-clip: text;
@@ -105,6 +105,7 @@
             font-size: 2.5rem;
         }
 
+        /* Icon glow on hover */
         .glass-card:hover .icon-glow {
             opacity: 1;
             filter: drop-shadow(0 0 20px rgba(255,255,255,0.6));
@@ -122,7 +123,6 @@
 </head>
 <body class="min-h-screen flex flex-col">
 
-    <!-- Model Viewer with initial opacity 0 -->
     <model-viewer 
         id="mouse-model"
         src="g305.glb" 
@@ -131,7 +131,8 @@
         camera-orbit="0deg 75deg 105%"
         field-of-view="30deg"
         shadow-intensity="2" 
-        exposure="1.2">
+        exposure="1.2"
+        loading="eager">
     </model-viewer>
 
     <div class="glass-overlay"></div>
@@ -164,33 +165,52 @@
     <script>
         const modelViewer = document.querySelector('#mouse-model');
 
-        // Fade in the model when it's fully loaded
         modelViewer.addEventListener('load', () => {
             modelViewer.classList.add('is-loaded');
+            modelViewer.pause();
+            modelViewer.currentTime = 0;
         });
 
-        // Mouse tracking logic for model orbit
+        const triggerClickAnimation = (side) => {
+            if (modelViewer.availableAnimations.includes(side)) {
+                modelViewer.pause();
+                modelViewer.currentTime = 0;
+                modelViewer.animationName = side;
+                // Tiny timeout ensures the reset is registered by the engine
+                setTimeout(() => {
+                    modelViewer.play({ repetitions: 1 });
+                }, 10);
+            }
+        };
+
+        window.addEventListener('mousedown', (e) => {
+            if (e.button === 0) triggerClickAnimation('left');
+            if (e.button === 2) triggerClickAnimation('right');
+        });
+
+        window.addEventListener('contextmenu', (e) => e.preventDefault());
+
         window.addEventListener('mousemove', (e) => {
             const xPercent = (e.clientX / window.innerWidth) - 0.5;
             const yPercent = (e.clientY / window.innerHeight) - 0.5;
-
-            const orbitX = -xPercent * 100; 
-            const orbitY = 100 - (yPercent * 40); 
-
-            modelViewer.cameraOrbit = `${orbitX}deg ${orbitY}deg 105%`;
+            modelViewer.cameraOrbit = `${-xPercent * 80}deg ${100 - (yPercent * 30)}deg 105%`;
         });
 
-        // Spotlight effect on glass cards
+        // Spotlight and card effects
         document.querySelectorAll('.glass-card').forEach(card => {
             card.addEventListener('mousemove', (e) => {
                 const rect = card.getBoundingClientRect();
-                const x = e.clientX - rect.left;
-                const y = e.clientY - rect.top;
-                card.style.background = `radial-gradient(circle at ${x}px ${y}px, rgba(255,255,255,0.15) 0%, rgba(255, 255, 255, 0.05) 70%)`;
+                card.style.background = `radial-gradient(circle at ${e.clientX - rect.left}px ${e.clientY - rect.top}px, rgba(255,255,255,0.15) 0%, rgba(255, 255, 255, 0.05) 70%)`;
             });
             card.addEventListener('mouseleave', () => {
                 card.style.background = `rgba(255, 255, 255, 0.05)`;
             });
+        });
+
+        // Ensures the animation resets to a clean slate after finishing
+        modelViewer.addEventListener('finished', () => {
+            modelViewer.pause();
+            modelViewer.currentTime = 0;
         });
     </script>
 </body>
