@@ -9,8 +9,10 @@
 <meta name="description" content="Free Minecraft Nether Portal Calculator. Convert coordinates between Overworld and Nether instantly.">
 <meta name="keywords" content="nether calculator, minecraft nether coordinates, nether portal calculator, overworld to nether">
 <link rel="preconnect" href="https://fonts.googleapis.com">
-<link href="https://fonts.googleapis.com/css2?family=Roboto:wght@300;400;500;600;700&display=swap" rel="stylesheet">
-<style>
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+ <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600&family=Space+Grotesk:wght@300;700;800&family=Roboto:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+ <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+ <style>
   :root {
     --ow:   #4ade80;
     --nt:   #ff4d4d; 
@@ -22,8 +24,35 @@
 
   * { box-sizing: border-box; margin: 0; padding: 0; }
 
+  /* Chrome text effect for top left title */
+  .top-left-title {
+    position: fixed;
+    top: 24px;
+    left: 24px;
+    text-decoration: none;
+    z-index: 100;
+  }
+
+  .chrome-title {
+    font-family: 'Space Grotesk', sans-serif;
+    background: linear-gradient(to bottom, #fff 40%, #555 100%);
+    background-clip: text;
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    font-weight: 800;
+    letter-spacing: -0.05em;
+    line-height: 1.12;
+    filter: drop-shadow(0 8px 12px rgba(0,0,0,0.5));
+    font-size: 2rem;
+    cursor: pointer;
+    display: inline-block;
+    padding-bottom: 0.1em;
+  }
+
   body {
     min-height: 100vh;
+    user-select: none;
+    -webkit-user-select: none;
     background: var(--bg);
     background-image: 
       radial-gradient(at 0% 0%, rgba(74, 222, 128, 0.12) 0, transparent 45%), 
@@ -52,22 +81,75 @@
     width: 100%;
     max-width: 680px;
     box-shadow: 0 40px 100px rgba(0,0,0,0.9), inset 0 0 1px rgba(255,255,255,0.1);
+    transition: all 0.6s cubic-bezier(0.4, 0, 0.2, 1);
+    position: relative;
+    overflow: hidden;
   }
 
-  .header { text-align: center; margin-bottom: 40px; }
+  .card.expanded {
+    max-width: 800px;
+    padding-top: 60px;
+  }
+
+  .header { text-align: center; margin-bottom: 40px; transition: all 0.4s ease; }
   .header h1 { 
     font-size: 2.2rem; 
     font-weight: 700; 
     letter-spacing: -0.8px;
     background: linear-gradient(180deg, #fff 0%, #aaa 100%);
+    background-clip: text;
     -webkit-background-clip: text;
     -webkit-text-fill-color: transparent;
+    transition: all 0.4s ease;
   }
 
   .main-grid {
     display: grid;
     grid-template-columns: 1fr 52px 1fr;
     row-gap: 20px;
+    transition: all 0.4s ease;
+  }
+
+  .card.expanded .main-grid,
+  .card.expanded .footer {
+    display: none;
+  }
+
+  .info-content {
+    display: none;
+    opacity: 0;
+    transform: translateY(20px);
+    transition: all 0.5s ease;
+    text-align: left;
+    margin-top: 20px;
+  }
+
+  .card.expanded .info-content {
+    display: block;
+    opacity: 1;
+    transform: translateY(0);
+  }
+
+  .info-text {
+    line-height: 1.8;
+    color: rgba(255, 255, 255, 0.7);
+    font-size: 16px;
+    margin-bottom: 12px;
+  }
+
+  .info-link {
+    margin-top: 10px;
+    font-size: 14px;
+    color: rgba(255, 255, 255, 0.62);
+  }
+
+  .info-link a {
+    color: #8fd8ff;
+    text-decoration: none;
+  }
+
+  .info-link a:hover {
+    text-decoration: underline;
   }
 
   .side-card {
@@ -139,7 +221,10 @@
     font-size: 16px;
     font-weight: 700;
     cursor: pointer;
-    transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+    transition: transform 0.2s cubic-bezier(0.4, 0, 0.2, 1), 
+                background 0.2s ease, 
+                box-shadow 0.2s ease, 
+                border-color 0.2s ease;
     display: flex;
     align-items: center;
     justify-content: center;
@@ -154,14 +239,16 @@
     color: var(--text);
     background: var(--glass-bg);
     box-shadow: 0 8px 32px rgba(0,0,0,0.4), inset 0 0 1px rgba(255,255,255,0.1);
+    will-change: transform;
   }
 
-  .btn:active { transform: scale(0.95); }
+  .btn:active { transform: scale(0.95) translateY(0); }
 
   .btn:hover {
     background: linear-gradient(135deg, rgba(255, 255, 255, 0.12), rgba(255, 255, 255, 0.06));
     border-color: rgba(255, 255, 255, 0.25);
     box-shadow: 0 12px 40px rgba(0,0,0,0.5), inset 0 0 1px rgba(255,255,255,0.15);
+    transform: translateY(-2px);
   }
 
   /* Swap Button - Center Column */
@@ -173,27 +260,143 @@
     font-size: 20px;
     align-self: center;
     justify-self: center;
-    transform: none;
     display: flex;
     align-items: center;
     justify-content: center;
   }
 
-  .swap-icon {
-    display: inline-block;
-    transition: transform 0.4s cubic-bezier(0.4, 0, 0.2, 1);
-  }
-
-  .btn-swap:hover .swap-icon {
-    transform: rotate(180deg);
-  }
-
   .btn-swap:hover {
     background: linear-gradient(135deg, rgba(255, 255, 255, 0.15), rgba(255, 255, 255, 0.08));
+    transform: translateY(-2px);
   }
 
-  .btn-swap:active {
-    transform: scale(0.9);
+  .btn-info:hover, .btn-close:hover {
+    transform: translateY(-2px) scale(1.05);
+  }
+
+  .btn-info {
+    width: 44px;
+    height: 44px;
+    border-radius: 50%;
+    font-size: 18px;
+    padding: 0;
+    flex-shrink: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+
+  .btn i {
+    transition: opacity 0.2s ease, filter 0.2s ease, transform 0.2s ease;
+    opacity: 0.7;
+    pointer-events: none; /* Let the button handle clicks */
+    user-select: none;
+  }
+
+  .btn:hover i {
+    opacity: 1;
+    filter: drop-shadow(0 0 10px rgba(255,255,255,0.6));
+  }
+
+  .btn-icon-svg {
+    width: 20px;
+    height: 20px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    opacity: 0.8;
+    transition: opacity 0.2s ease, filter 0.2s ease, transform 0.2s ease;
+    pointer-events: none;
+    user-select: none;
+    transform-origin: center;
+  }
+
+  .btn-icon-svg svg {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 100%;
+    height: 100%;
+    margin: 0;
+    padding: 0;
+  }
+
+  .btn-icon-svg svg path,
+  .btn-icon-svg svg line,
+  .btn-icon-svg svg polyline {
+    stroke: currentColor;
+    stroke-width: 2.8;
+    stroke-linecap: round;
+    stroke-linejoin: round;
+    fill: none;
+  }
+
+  .btn:hover .btn-icon-svg {
+    opacity: 1;
+    filter: drop-shadow(0 0 10px rgba(255,255,255,0.6));
+  }
+
+  .btn-swap .btn-icon-svg,
+  .btn-close .btn-icon-svg {
+    width: 18px;
+    height: 18px;
+    transform: none;
+  }
+
+  .btn-info .btn-icon-svg {
+    width: 24px;
+    height: 24px;
+    transform: none;
+  }
+
+  /* Triggered icon flip using Font Awesome's fa-flip class logic */
+  .fa-flip {
+    --fa-animation-duration: 0.6s;
+    --fa-animation-iteration-count: 1;
+    --fa-animation-timing: cubic-bezier(0.4, 0, 0.2, 1);
+  }
+
+  .icon-spin {
+    animation: iconSpin 0.6s cubic-bezier(0.4, 0, 0.2, 1);
+  }
+
+  @keyframes iconSpin {
+    from { transform: rotate(0deg); }
+    to { transform: rotate(180deg); }
+  }
+
+  .btn-close {
+    position: absolute;
+    top: 24px;
+    left: 24px;
+    width: 36px;
+    height: 36px;
+    border-radius: 50%;
+    font-size: 16px;
+    padding: 0;
+    display: none;
+    z-index: 10;
+    align-items: center;
+    justify-content: center;
+  }
+
+  .card.expanded .btn-close {
+    display: flex;
+  }
+
+  .card.expanded .btn-info {
+    display: none;
+  }
+
+  .reset-info-container {
+    display: flex;
+    gap: 12px;
+    align-items: center;
+  }
+
+  .reset-info-container .btn-reset {
+    flex: 1;
+    gap: 10px;
   }
 
   /* Copy Button - Dynamic tinted glass matching mode */
@@ -202,6 +405,26 @@
     overflow: hidden;
     color: #fff;
     text-shadow: 0 1px 3px rgba(0,0,0,0.4);
+    gap: 10px;
+    transition: transform 0.2s cubic-bezier(0.4, 0, 0.2, 1),
+                background 0.45s ease,
+                border-color 0.45s ease,
+                box-shadow 0.45s ease;
+  }
+
+  .btn-copy .copy-content {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 10px;
+    opacity: 1;
+    transform: translateY(0);
+    transition: opacity 0.22s ease, transform 0.22s ease;
+  }
+
+  .btn-copy.is-switching .copy-content {
+    opacity: 0;
+    transform: translateY(4px);
   }
 
   /* Nether mode: red tinted glass */
@@ -243,58 +466,110 @@
     .card { padding: 32px 20px; }
     .main-grid { grid-template-columns: 1fr 36px 1fr; }
     .btn-swap { width: 36px; height: 36px; font-size: 16px; }
+    .btn-info .btn-icon-svg { width: 22px; height: 22px; }
   }
 </style>
 </head>
 <body>
 
-<div class="card">
-  <div class="header">
-    <h1>Nether Portal Calculator</h1>
-  </div>
+<a href="/" class="top-left-title">
+  <h1 class="chrome-title">lagy.pw</h1>
+</a>
 
-  <div class="main-grid">
-    <div class="side-card ow">
-      <div class="side-title">Overworld</div>
-      <div class="field">
-        <span class="field-label">X</span>
-        <input type="number" id="ow-x" placeholder="0" oninput="calc('ow')">
-      </div>
-      <div class="field">
-        <span class="field-label">Y</span>
-        <input type="number" id="ow-y" placeholder="64" oninput="calc('ow')">
-      </div>
-      <div class="field">
-        <span class="field-label">Z</span>
-        <input type="number" id="ow-z" placeholder="0" oninput="calc('ow')">
-      </div>
-    </div>
-
-    <button class="btn btn-swap" onclick="swapMode()" title="Swap direction">
-      <span class="swap-icon">⇆</span>
+<div class="card" id="main-card">
+    <button class="btn btn-close" onclick="toggleInfo()" title="Close information">
+      <span class="btn-icon-svg" aria-hidden="true">
+        <svg viewBox="0 0 24 24">
+          <line x1="18" y1="6" x2="6" y2="18"></line>
+          <line x1="6" y1="6" x2="18" y2="18"></line>
+        </svg>
+      </span>
     </button>
-
-    <div class="side-card nt">
-      <div class="side-title">Nether</div>
-      <div class="field">
-        <span class="field-label">X</span>
-        <input type="number" id="nt-x" placeholder="0" oninput="calc('nt')">
-      </div>
-      <div class="field">
-        <span class="field-label">Y</span>
-        <input type="number" id="nt-y" placeholder="64" oninput="calc('nt')">
-      </div>
-      <div class="field">
-        <span class="field-label">Z</span>
-        <input type="number" id="nt-z" placeholder="0" oninput="calc('nt')">
-      </div>
+    <div class="header">
+      <h1 id="main-header">Nether Portal Calculator</h1>
     </div>
 
-    <button class="btn btn-reset" onclick="reset()">↺ Reset</button>
+    <div class="main-grid">
+      <div class="side-card ow">
+        <div class="side-title">Overworld</div>
+        <div class="field">
+          <span class="field-label">X</span>
+          <input type="number" id="ow-x" placeholder="0" oninput="calc('ow')">
+        </div>
+        <div class="field">
+          <span class="field-label">Y</span>
+          <input type="number" id="ow-y" placeholder="64" oninput="calc('ow')">
+        </div>
+        <div class="field">
+          <span class="field-label">Z</span>
+          <input type="number" id="ow-z" placeholder="0" oninput="calc('ow')">
+        </div>
+      </div>
+
+      <button class="btn btn-swap" onclick="swapMode()" title="Swap direction">
+        <span class="btn-icon-svg" id="swap-icon" aria-hidden="true">
+          <svg viewBox="0 0 24 24">
+            <line x1="4" y1="8" x2="18" y2="8"></line>
+            <polyline points="14 4 18 8 14 12"></polyline>
+            <line x1="20" y1="16" x2="6" y2="16"></line>
+            <polyline points="10 12 6 16 10 20"></polyline>
+          </svg>
+        </span>
+      </button>
+
+      <div class="side-card nt">
+        <div class="side-title">Nether</div>
+        <div class="field">
+          <span class="field-label">X</span>
+          <input type="number" id="nt-x" placeholder="0" oninput="calc('nt')">
+        </div>
+        <div class="field">
+          <span class="field-label">Y</span>
+          <input type="number" id="nt-y" placeholder="64" oninput="calc('nt')">
+        </div>
+        <div class="field">
+          <span class="field-label">Z</span>
+          <input type="number" id="nt-z" placeholder="0" oninput="calc('nt')">
+        </div>
+      </div>
+
+      <div class="reset-info-container">
+        <button class="btn btn-info" onclick="toggleInfo()" title="Additional Information">
+          <span class="btn-icon-svg" aria-hidden="true">
+            <svg viewBox="0 0 24 24">
+              <path d="M9.25 9a2.75 2.75 0 1 1 4.65 2l-1.15 1.05a2 2 0 0 0-.65 1.48v.22"></path>
+              <circle cx="12" cy="18" r="1.25" fill="currentColor" stroke="none"></circle>
+            </svg>
+          </span>
+        </button>
+        <button class="btn btn-reset" onclick="reset()"><i class="fa-solid fa-rotate-right"></i> Reset</button>
+      </div>
     <div></div>
 
     <div class="btn-container">
-      <button class="btn btn-copy nt-mode" id="copy-btn" onclick="copyCoords()">📋 Copy Nether</button>
+      <button class="btn btn-copy nt-mode" id="copy-btn" onclick="copyCoords()"><span class="copy-content"><i class="fa-solid fa-copy"></i> Copy Nether</span></button>
+    </div>
+  </div>
+
+  <div class="info-content">
+    <div class="info-text">
+      The Nether Portal Calculator is a tool designed to help Minecraft players link their portals correctly between the Overworld and the Nether dimensions.
+    </div>
+    <div class="info-text">
+      Distance in the Nether is compressed by a ratio of 8:1 compared to the Overworld. This means every block you travel in the Nether is equivalent to 8 blocks in the Overworld.
+    </div>
+    <div class="info-text">
+      To link portals precisely, you should divide your Overworld X and Z coordinates by 8 to get the corresponding Nether coordinates, or multiply Nether coordinates by 8 to get the Overworld ones.
+    </div>
+    <div class="info-text">
+      The Y coordinate (height) does not change when calculating portal locations, but it is still important to ensure portals are at a safe and accessible altitude.
+    </div>
+    <div class="info-text">
+      Use this calculator to quickly find where to build your portals for perfect synchronization and efficient travel across your Minecraft world.
+    </div>
+    <div class="info-link">
+      For more info:
+      <a href="https://minecraft.wiki/w/Nether_Portal" target="_blank" rel="noopener noreferrer">minecraft.wiki/w/Nether_Portal</a>
     </div>
   </div>
 
@@ -322,18 +597,39 @@
   function swapMode() {
     copyMode = (copyMode === 'nt') ? 'ow' : 'nt';
     updateCopyButtonUI();
+
+    const icon = document.getElementById('swap-icon');
+    icon.classList.remove('icon-spin');
+    void icon.offsetWidth;
+    icon.classList.add('icon-spin');
   }
 
-  function updateCopyButtonUI() {
+  function setCopyButtonContent(label, iconClass, animate = true) {
+    const btn = document.getElementById('copy-btn');
+    const nextHtml = `<span class="copy-content"><i class="fa-solid ${iconClass}"></i> ${label}</span>`;
+
+    if (!animate || !btn.querySelector('.copy-content')) {
+      btn.innerHTML = nextHtml;
+      return;
+    }
+
+    btn.classList.add('is-switching');
+    setTimeout(() => {
+      btn.innerHTML = nextHtml;
+      requestAnimationFrame(() => btn.classList.remove('is-switching'));
+    }, 160);
+  }
+
+  function updateCopyButtonUI(animate = true) {
     const btn = document.getElementById('copy-btn');
     if (copyMode === 'nt') {
-      btn.textContent = '📋 Copy Nether';
       btn.classList.remove('ow-mode');
       btn.classList.add('nt-mode');
+      setCopyButtonContent('Copy Nether', 'fa-copy', animate);
     } else {
-      btn.textContent = '📋 Copy Overworld';
       btn.classList.remove('nt-mode');
       btn.classList.add('ow-mode');
+      setCopyButtonContent('Copy Overworld', 'fa-copy', animate);
     }
   }
 
@@ -350,12 +646,9 @@
 
     const text = `${label}: X: ${x}, Y: ${y}, Z: ${z}`;
     navigator.clipboard.writeText(text).then(() => {
-      const btn = document.getElementById('copy-btn');
-      const originalText = btn.textContent;
-      btn.textContent = '✅ Copied!';
+      setCopyButtonContent('Copied!', 'fa-check', false);
       setTimeout(() => {
-        btn.textContent = originalText;
-        updateCopyButtonUI();
+        updateCopyButtonUI(true);
       }, 1000);
     });
   }
@@ -363,7 +656,20 @@
   function reset() {
     ['ow-x', 'ow-y', 'ow-z', 'nt-x', 'nt-y', 'nt-z'].forEach(id => document.getElementById(id).value = '');
     copyMode = 'nt';
-    updateCopyButtonUI();
+    updateCopyButtonUI(false);
+  }
+
+  function toggleInfo() {
+    const card = document.getElementById('main-card');
+    const header = document.getElementById('main-header');
+    
+    if (card.classList.contains('expanded')) {
+      card.classList.remove('expanded');
+      header.textContent = 'Nether Portal Calculator';
+    } else {
+      card.classList.add('expanded');
+      header.textContent = 'Additional Information';
+    }
   }
 </script>
 </body>
