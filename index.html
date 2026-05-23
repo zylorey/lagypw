@@ -154,27 +154,58 @@
             modelViewer.currentTime = 0;
         });
 
-        const triggerClickAnimation = (side) => {
-            if (modelViewer.availableAnimations.includes(side)) {
-                modelViewer.pause();
-                modelViewer.currentTime = 0;
-                modelViewer.animationName = side;
-                setTimeout(() => {
-                    modelViewer.play({ repetitions: 1 });
-                }, 10);
-            }
-        };
+        let pressSide = null;
+        let pressCheckId = null;
 
         window.addEventListener('mousedown', (e) => {
-            if (e.button === 0) triggerClickAnimation('left');
-            if (e.button === 2) triggerClickAnimation('right');
+            let side = null;
+            if (e.button === 0) side = 'left';
+            else if (e.button === 2) side = 'right';
+            if (!side || !modelViewer.availableAnimations.includes(side)) return;
+
+            if (pressCheckId) cancelAnimationFrame(pressCheckId);
+            pressSide = side;
+
+            modelViewer.pause();
+            modelViewer.currentTime = 0;
+            modelViewer.animationName = side;
+            modelViewer.play({ repetitions: 1 });
+
+            (function checkDown() {
+                if (modelViewer.currentTime >= 0.08) {
+                    modelViewer.pause();
+                    pressCheckId = null;
+                    return;
+                }
+                pressCheckId = requestAnimationFrame(checkDown);
+            })();
+        });
+
+        window.addEventListener('mouseup', () => {
+            if (!pressSide) return;
+
+            if (pressCheckId) {
+                cancelAnimationFrame(pressCheckId);
+                pressCheckId = null;
+            }
+
+            if (modelViewer.currentTime < 0.08) {
+                modelViewer.currentTime = 0.08;
+            }
+
+            modelViewer.play({ repetitions: 1 });
         });
 
         window.addEventListener('contextmenu', (e) => e.preventDefault());
 
         modelViewer.addEventListener('finished', () => {
+            if (pressCheckId) {
+                cancelAnimationFrame(pressCheckId);
+                pressCheckId = null;
+            }
             modelViewer.pause();
             modelViewer.currentTime = 0;
+            pressSide = null;
         });
 
         /* ─── Springy Physics ────────────────────────────────────────────── */
