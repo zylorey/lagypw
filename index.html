@@ -156,6 +156,7 @@
 
         let pressSide = null;
         let pressCheckId = null;
+        let pressDeferId = null;
 
         window.addEventListener('mousedown', (e) => {
             let side = null;
@@ -163,27 +164,39 @@
             else if (e.button === 2) side = 'right';
             if (!side || !modelViewer.availableAnimations.includes(side)) return;
 
+            if (pressDeferId) cancelAnimationFrame(pressDeferId);
             if (pressCheckId) cancelAnimationFrame(pressCheckId);
             pressSide = side;
+            pressCheckId = null;
+            pressDeferId = null;
 
             modelViewer.pause();
             modelViewer.currentTime = 0;
             modelViewer.animationName = side;
-            modelViewer.play({ repetitions: 1 });
 
-            (function checkDown() {
-                if (modelViewer.currentTime >= 0.08) {
-                    modelViewer.pause();
-                    pressCheckId = null;
-                    return;
-                }
-                pressCheckId = requestAnimationFrame(checkDown);
-            })();
+            pressDeferId = requestAnimationFrame(() => {
+                if (pressSide !== side) return;
+                pressDeferId = null;
+                modelViewer.play({ repetitions: 1 });
+
+                (function checkDown() {
+                    if (modelViewer.currentTime >= 0.08) {
+                        modelViewer.pause();
+                        pressCheckId = null;
+                        return;
+                    }
+                    pressCheckId = requestAnimationFrame(checkDown);
+                })();
+            });
         });
 
         window.addEventListener('mouseup', () => {
             if (!pressSide) return;
 
+            if (pressDeferId) {
+                cancelAnimationFrame(pressDeferId);
+                pressDeferId = null;
+            }
             if (pressCheckId) {
                 cancelAnimationFrame(pressCheckId);
                 pressCheckId = null;
@@ -194,11 +207,25 @@
             }
 
             modelViewer.play({ repetitions: 1 });
+
+            (function checkUp() {
+                if (modelViewer.currentTime >= 0.13) {
+                    modelViewer.pause();
+                    modelViewer.currentTime = 0;
+                    pressSide = null;
+                    return;
+                }
+                pressCheckId = requestAnimationFrame(checkUp);
+            })();
         });
 
         window.addEventListener('contextmenu', (e) => e.preventDefault());
 
         modelViewer.addEventListener('finished', () => {
+            if (pressDeferId) {
+                cancelAnimationFrame(pressDeferId);
+                pressDeferId = null;
+            }
             if (pressCheckId) {
                 cancelAnimationFrame(pressCheckId);
                 pressCheckId = null;
