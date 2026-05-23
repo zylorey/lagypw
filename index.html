@@ -58,7 +58,8 @@
             -webkit-backdrop-filter: blur(16px) saturate(180%);
             border: 1px solid var(--glass-border);
             border-radius: 32px;
-            transition: all 0.5s cubic-bezier(0.19, 1, 0.22, 1);
+            /* Only transition background and border — NOT transform (JS physics handles that) */
+            transition: background 0.3s ease, border-color 0.3s ease, box-shadow 0.3s ease;
             display: flex;
             align-items: center;
             justify-content: center;
@@ -66,11 +67,16 @@
             position: relative;
             z-index: 10;
             box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.37);
+            /* Springy needs these */
+            transform-origin: center center;
+            will-change: transform;
+            cursor: pointer;
+            touch-action: none;
         }
         .glass-card:hover {
             background: rgba(255, 255, 255, 0.1);
             border-color: rgba(255, 255, 255, 0.3);
-            transform: translateY(-10px) scale(1.05);
+            /* Removed CSS transform hover — JS physics replaces it */
             box-shadow: 0 15px 45px rgba(255, 255, 255, 0.05);
         }
         .chrome-title {
@@ -88,6 +94,7 @@
             color: #ffffff !important;
             opacity: 0.7;
             font-size: 2.5rem;
+            pointer-events: none;
         }
         .glass-card:hover .icon-glow {
             opacity: 1;
@@ -138,6 +145,7 @@
         <p class="text-[10px] uppercase tracking-[1em]">ㅤ</p>
     </footer>
     <script>
+        /* ─── Model Viewer Setup ─────────────────────────────────────────── */
         const modelViewer = document.querySelector('#mouse-model');
 
         modelViewer.addEventListener('load', () => {
@@ -145,6 +153,7 @@
             modelViewer.pause();
             modelViewer.currentTime = 0;
         });
+
         const triggerClickAnimation = (side) => {
             if (modelViewer.availableAnimations.includes(side)) {
                 modelViewer.pause();
@@ -155,29 +164,147 @@
                 }, 10);
             }
         };
+
         window.addEventListener('mousedown', (e) => {
             if (e.button === 0) triggerClickAnimation('left');
             if (e.button === 2) triggerClickAnimation('right');
         });
+
         window.addEventListener('contextmenu', (e) => e.preventDefault());
 
-        window.addEventListener('mousemove', (e) => {
-            const xPercent = (e.clientX / window.innerWidth) - 0.5;
-            const yPercent = (e.clientY / window.innerHeight) - 0.5;
-            modelViewer.cameraOrbit = `${-xPercent * 80}deg ${100 - (yPercent * 30)}deg 105%`;
+        modelViewer.addEventListener('finished', () => {
+            modelViewer.pause();
+            modelViewer.currentTime = 0;
         });
+
+        /* ─── Springy Physics ────────────────────────────────────────────── */
+        const PHYSICS = {
+            stiffness:      0.010,
+            damping:        0.950,
+            scaleBounce:    0.025,
+            dragResistance: 0.350,
+            squishSize:     0.760,
+            squishSpeed:    0.150
+        };
+
+        const cardStates = new Map();
+
         document.querySelectorAll('.glass-card').forEach(card => {
+
+            /* Existing radial-gradient hover effect */
             card.addEventListener('mousemove', (e) => {
+                if (cardStates.get(card).isDragging) return; // skip while dragging
                 const rect = card.getBoundingClientRect();
                 card.style.background = `radial-gradient(circle at ${e.clientX - rect.left}px ${e.clientY - rect.top}px, rgba(255,255,255,0.15) 0%, rgba(255, 255, 255, 0.05) 70%)`;
             });
             card.addEventListener('mouseleave', () => {
                 card.style.background = `rgba(255, 255, 255, 0.05)`;
             });
+
+            /* Per-card physics state */
+            const state = {
+                isDragging: false,
+                startX: 0, startY: 0,
+                tx: 0,    ty: 0,
+                vx: 0,    vy: 0,
+                scale: 1, scaleV: 0,
+                lastX: 0, lastY: 0,
+                prevX: 0, prevY: 0,
+                raf: null,
+                phase: 'idle'
+            };
+            cardStates.set(card, state);
+
+            function applyTransform() {
+                card.style.transform = `translate(${state.tx}px, ${state.ty}px) scale(${state.scale})`;
+            }
+
+            function squishLoop() {
+                state.scale += (PHYSICS.squishSize - state.scale) * PHYSICS.squishSpeed;
+                applyTransform();
+                if (Math.abs(state.scale - PHYSICS.squishSize) > 0.001 && state.phase === 'squish') {
+                    state.raf = requestAnimationFrame(squishLoop);
+                }
+            }
+
+            function bounceLoop() {
+                const ax = -state.tx * PHYSICS.stiffness;
+                const ay = -state.ty * PHYSICS.stiffness;
+                state.vx = state.vx * PHYSICS.damping + ax;
+                state.vy = state.vy * PHYSICS.damping + ay;
+                state.tx += state.vx;
+                state.ty += state.vy;
+
+                const scaleForce = (1 - state.scale) * PHYSICS.scaleBounce;
+                state.scaleV = state.scaleV * (PHYSICS.damping * 0.97) + scaleForce;
+                state.scale += state.scaleV;
+
+                applyTransform();
+
+                const settled =
+                    Math.abs(state.tx) <= 0.08 && Math.abs(state.ty) <= 0.08 &&
+                    Math.abs(state.vx) <= 0.02 && Math.abs(state.vy) <= 0.02 &&
+                    Math.abs(state.scale - 1) <= 0.001 && Math.abs(state.scaleV) <= 0.001;
+
+                if (!settled) {
+                    state.raf = requestAnimationFrame(bounceLoop);
+                } else {
+                    state.tx = 0; state.ty = 0;
+                    state.vx = 0; state.vy = 0;
+                    state.scale = 1; state.scaleV = 0;
+                    card.style.transform = '';
+                    state.phase = 'idle';
+                }
+            }
+
+            /* Store loop refs for window handlers */
+            state._squishLoop = squishLoop;
+            state._bounceLoop = bounceLoop;
+
+            card.addEventListener('mousedown', (e) => {
+                state.isDragging = true;
+                state.startX = e.clientX; state.startY = e.clientY;
+                state.prevX = e.clientX; state.lastX = e.clientX;
+                state.prevY = e.clientY; state.lastY = e.clientY;
+                state.vx = 0; state.vy = 0; state.scaleV = 0;
+                card.style.cursor = 'grabbing';
+                if (state.raf) cancelAnimationFrame(state.raf);
+                state.phase = 'squish';
+                state.raf = requestAnimationFrame(squishLoop);
+                e.preventDefault(); // prevent link navigation while dragging
+            });
         });
-        modelViewer.addEventListener('finished', () => {
-            modelViewer.pause();
-            modelViewer.currentTime = 0;
+
+        /* ─── Merged window-level listeners ─────────────────────────────── */
+        window.addEventListener('mousemove', (e) => {
+            /* Model viewer orbit tracking */
+            const xPercent = (e.clientX / window.innerWidth)  - 0.5;
+            const yPercent = (e.clientY / window.innerHeight) - 0.5;
+            modelViewer.cameraOrbit = `${-xPercent * 80}deg ${100 - (yPercent * 30)}deg 105%`;
+
+            /* Springy drag for whichever card is active */
+            cardStates.forEach((state, card) => {
+                if (!state.isDragging) return;
+                state.prevX = state.lastX; state.prevY = state.lastY;
+                state.lastX = e.clientX;   state.lastY = e.clientY;
+                state.tx = (e.clientX - state.startX) * PHYSICS.dragResistance;
+                state.ty = (e.clientY - state.startY) * PHYSICS.dragResistance;
+                card.style.transform = `translate(${state.tx}px, ${state.ty}px) scale(${state.scale})`;
+            });
+        });
+
+        window.addEventListener('mouseup', () => {
+            cardStates.forEach((state, card) => {
+                if (!state.isDragging) return;
+                state.isDragging = false;
+                card.style.cursor = 'pointer';
+                state.vx = (state.lastX - state.prevX) * PHYSICS.dragResistance * 0.6;
+                state.vy = (state.lastY - state.prevY) * PHYSICS.dragResistance * 0.6;
+                state.scaleV = PHYSICS.scaleBounce * 1.5;
+                if (state.raf) cancelAnimationFrame(state.raf);
+                state.phase = 'bounce';
+                state.raf = requestAnimationFrame(state._bounceLoop);
+            });
         });
     </script>
 </body>
