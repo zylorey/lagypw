@@ -54,6 +54,19 @@
     user-select: none;
     -webkit-user-select: none;
     background: var(--bg);
+    font-family: 'Roboto', sans-serif;
+    color: var(--text);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 24px;
+  }
+
+  body::before {
+    content: '';
+    position: fixed;
+    inset: 0;
+    z-index: -1;
     background-image: 
       radial-gradient(at 0% 0%, rgba(74, 222, 128, 0.12) 0, transparent 45%), 
       radial-gradient(at 100% 100%, rgba(255, 77, 77, 0.12) 0, transparent 45%),
@@ -61,12 +74,11 @@
     background-size: cover;
     background-position: center;
     background-attachment: fixed;
-    font-family: 'Roboto', sans-serif;
-    color: var(--text);
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    padding: 24px;
+    pointer-events: none;
+  }
+
+  body.bg-flipped::before {
+    transform: scaleX(-1);
   }
 
   .card {
@@ -88,7 +100,7 @@
 
   .card.expanded {
     max-width: 800px;
-    padding-top: 60px;
+    padding: 24px;
   }
 
   .header { text-align: center; margin-bottom: 40px; transition: all 0.4s ease; }
@@ -110,8 +122,11 @@
     transition: all 0.4s ease;
   }
 
+  .card.expanded .header,
   .card.expanded .main-grid,
-  .card.expanded .footer {
+  .card.expanded .footer,
+  .card.expanded .reset-info-container,
+  .card.expanded .btn-container {
     display: none;
   }
 
@@ -121,7 +136,8 @@
     transform: translateY(20px);
     transition: all 0.5s ease;
     text-align: left;
-    margin-top: 20px;
+    margin-top: 0;
+    position: relative;
   }
 
   .card.expanded .info-content {
@@ -152,6 +168,13 @@
     text-decoration: underline;
   }
 
+  .info-image {
+    width: 100%;
+    height: auto;
+    border-radius: 16px;
+    display: block;
+  }
+
   .side-card {
     border-radius: 20px;
     padding: 24px 20px;
@@ -169,6 +192,20 @@
 
   .side-card.ow { border-bottom: 2px solid rgba(74, 222, 128, 0.4); }
   .side-card.nt { border-bottom: 2px solid rgba(255, 77, 77, 0.4); }
+
+  .main-grid.swapped .side-card.ow {
+    border-bottom: 2px solid rgba(255, 77, 77, 0.4);
+  }
+  .main-grid.swapped .side-card.ow .side-title { color: var(--nt); }
+  .main-grid.swapped .side-card.ow input { color: var(--nt); }
+  .main-grid.swapped .side-card.ow input::placeholder { color: rgba(255, 77, 77, 0.35); }
+
+  .main-grid.swapped .side-card.nt {
+    border-bottom: 2px solid rgba(74, 222, 128, 0.4);
+  }
+  .main-grid.swapped .side-card.nt .side-title { color: var(--ow); }
+  .main-grid.swapped .side-card.nt input { color: var(--ow); }
+  .main-grid.swapped .side-card.nt input::placeholder { color: rgba(74, 222, 128, 0.35); }
 
   .side-title {
     font-size: 18px;
@@ -367,8 +404,8 @@
 
   .btn-close {
     position: absolute;
-    top: 24px;
-    left: 24px;
+    top: 12px;
+    left: 12px;
     width: 36px;
     height: 36px;
     border-radius: 50%;
@@ -477,14 +514,6 @@
 </a>
 
 <div class="card" id="main-card">
-    <button class="btn btn-close" onclick="toggleInfo()" title="Close information">
-      <span class="btn-icon-svg" aria-hidden="true">
-        <svg viewBox="0 0 24 24">
-          <line x1="18" y1="6" x2="6" y2="18"></line>
-          <line x1="6" y1="6" x2="18" y2="18"></line>
-        </svg>
-      </span>
-    </button>
     <div class="header">
       <h1 id="main-header">Nether Portal Calculator</h1>
     </div>
@@ -552,25 +581,15 @@
   </div>
 
   <div class="info-content">
-    <div class="info-text">
-      The Nether Portal Calculator is a tool designed to help Minecraft players link their portals correctly between the Overworld and the Nether dimensions.
-    </div>
-    <div class="info-text">
-      Distance in the Nether is compressed by a ratio of 8:1 compared to the Overworld. This means every block you travel in the Nether is equivalent to 8 blocks in the Overworld.
-    </div>
-    <div class="info-text">
-      To link portals precisely, you should divide your Overworld X and Z coordinates by 8 to get the corresponding Nether coordinates, or multiply Nether coordinates by 8 to get the Overworld ones.
-    </div>
-    <div class="info-text">
-      The Y coordinate (height) does not change when calculating portal locations, but it is still important to ensure portals are at a safe and accessible altitude.
-    </div>
-    <div class="info-text">
-      Use this calculator to quickly find where to build your portals for perfect synchronization and efficient travel across your Minecraft world.
-    </div>
-    <div class="info-link">
-      For more info:
-      <a href="https://minecraft.wiki/w/Nether_Portal" target="_blank" rel="noopener noreferrer">minecraft.wiki/w/Nether_Portal</a>
-    </div>
+    <button class="btn btn-close" onclick="toggleInfo()" title="Close information">
+      <span class="btn-icon-svg" aria-hidden="true">
+        <svg viewBox="0 0 24 24">
+          <line x1="18" y1="6" x2="6" y2="18"></line>
+          <line x1="6" y1="6" x2="18" y2="18"></line>
+        </svg>
+      </span>
+    </button>
+    <img src="nether.webp" alt="Nether" class="info-image">
   </div>
 
   <div class="footer">not affiliated with mojang studios</div>
@@ -597,6 +616,12 @@
   function swapMode() {
     copyMode = (copyMode === 'nt') ? 'ow' : 'nt';
     updateCopyButtonUI();
+
+    const titles = document.querySelectorAll('.side-title');
+    [titles[0].textContent, titles[1].textContent] = [titles[1].textContent, titles[0].textContent];
+
+    document.querySelector('.main-grid').classList.toggle('swapped');
+    document.body.classList.toggle('bg-flipped');
 
     const icon = document.getElementById('swap-icon');
     icon.classList.remove('icon-spin');
@@ -668,7 +693,7 @@
       header.textContent = 'Nether Portal Calculator';
     } else {
       card.classList.add('expanded');
-      header.textContent = 'Additional Information';
+      header.textContent = 'Nether Portal Calculator';
     }
   }
 </script>
