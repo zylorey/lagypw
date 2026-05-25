@@ -1,0 +1,545 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Net</title>
+<link rel="icon" href="happy.webp" type="image/webp">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
+<link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg: #1a1a1a;
+    --surface: #222222;
+    --surface2: #2a2a2a;
+    --border: #ffffff0d;
+    --border2: #ffffff1a;
+    --green: #4ade80;
+    --green-dim: #4ade8018;
+    --green-border: #4ade8030;
+    --text: #ffffff;
+    --muted: #888888;
+    --muted2: #aaaaaa;
+    --radius: 12px;
+    --radius-sm: 8px;
+  }
+
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+
+  body {
+    background: var(--bg);
+    color: var(--text);
+    font-family: 'Plus Jakarta Sans', sans-serif;
+    min-height: 100vh;
+    line-height: 1.6;
+  }
+
+  header {
+    border-bottom: 1px solid var(--border);
+    padding: 0 2rem;
+    display: flex;
+    align-items: center;
+    height: 60px;
+    position: sticky;
+    top: 0;
+    background: var(--bg);
+    z-index: 100;
+  }
+
+  .logo {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-weight: 700;
+    font-size: 1.1rem;
+    color: #ffffff;
+  }
+
+  main {
+    max-width: 1300px;
+    margin: 0 auto;
+    padding: 2rem;
+    display: flex;
+    flex-direction: column;
+    gap: 1.5rem;
+  }
+
+  .page-title {
+    font-weight: 700;
+    font-size: 1.5rem;
+    letter-spacing: -0.03em;
+    color: #ffffff;
+  }
+
+  .page-sub {
+    font-size: 12px;
+    color: var(--muted);
+    margin-top: 2px;
+  }
+
+  .loading {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 3rem 0;
+  }
+
+  .spinner {
+    width: 20px; height: 20px;
+    border: 2px solid var(--border2);
+    border-top-color: var(--green);
+    border-radius: 50%;
+    animation: spin 0.7s linear infinite;
+  }
+
+  @keyframes spin { to { transform: rotate(360deg); } }
+
+  .stats-grid {
+    display: grid;
+    grid-template-columns: repeat(5, 1fr);
+    gap: 1rem;
+  }
+
+  .stat-card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: 1.25rem 1.5rem;
+    position: relative;
+    overflow: hidden;
+    transition: border-color 0.2s;
+    min-height: 90px;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+  }
+
+  .stat-card:hover { border-color: var(--border2); }
+
+  .stat-card::before {
+    content: '';
+    position: absolute;
+    top: 0; left: 0; right: 0;
+    height: 2px;
+    background: var(--green);
+    opacity: 0.5;
+  }
+
+  .stat-label {
+    font-size: 10px;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    color: var(--muted);
+    margin-bottom: 8px;
+    font-weight: 600;
+  }
+
+  .stat-value {
+    font-size: 1.4rem;
+    font-weight: 700;
+    letter-spacing: -0.02em;
+    color: #ffffff;
+    line-height: 1.2;
+    white-space: normal;
+    overflow: visible;
+    text-overflow: unset;
+    word-break: break-word;
+  }
+
+  .section {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    overflow: hidden;
+  }
+
+  .section-header {
+    padding: 1rem 1.5rem;
+    border-bottom: 1px solid var(--border);
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+  }
+
+  .section-title {
+    font-size: 0.82rem;
+    font-weight: 600;
+    color: #ffffff;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+
+  .section-title-dot {
+    width: 6px; height: 6px;
+    background: var(--green);
+    border-radius: 50%;
+  }
+
+  .section-badge {
+    font-size: 10px;
+    color: var(--muted);
+    background: var(--surface2);
+    border: 1px solid var(--border);
+    padding: 2px 8px;
+    border-radius: 99px;
+  }
+
+  .chart-wrap {
+    padding: 1.5rem;
+    height: 240px;
+    position: relative;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+
+  .chart-wrap canvas {
+    position: absolute;
+    top: 0; left: 0;
+    width: 100% !important;
+    height: 100% !important;
+    padding: 1.5rem;
+  }
+
+  .table-wrap { overflow-x: auto; }
+
+  table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 12px;
+  }
+
+  thead tr {
+    border-bottom: 1px solid var(--border);
+    background: var(--surface2);
+  }
+
+  thead th {
+    padding: 10px 16px;
+    text-align: left;
+    font-size: 10px;
+    letter-spacing: 0.07em;
+    text-transform: uppercase;
+    color: var(--muted);
+    font-weight: 600;
+    white-space: nowrap;
+  }
+
+  tbody tr {
+    border-bottom: 1px solid var(--border);
+    transition: background 0.1s;
+  }
+
+  tbody tr:last-child { border-bottom: none; }
+  tbody tr:hover { background: var(--surface2); }
+
+  tbody td {
+    padding: 10px 16px;
+    color: var(--muted2);
+    vertical-align: middle;
+    white-space: nowrap;
+  }
+
+  .td-id   { font-size: 11px; color: var(--muted); }
+  .td-buyer { color: #ffffff; font-weight: 500; }
+  .td-revenue { color: var(--green); font-weight: 600; }
+  .td-date  { font-size: 11px; color: var(--muted); }
+
+  .badge {
+    display: inline-block;
+    padding: 2px 8px;
+    border-radius: 4px;
+    font-size: 10px;
+    font-weight: 500;
+  }
+
+  .badge-produk {
+    background: var(--green-dim);
+    color: var(--green);
+    border: 1px solid var(--green-border);
+  }
+
+  .error-box {
+    background: #ff444415;
+    border: 1px solid #ff444430;
+    border-radius: var(--radius);
+    padding: 1rem 1.5rem;
+    font-size: 12px;
+    color: #ff8888;
+    display: none;
+    align-items: center;
+    gap: 10px;
+  }
+
+  footer {
+    text-align: center;
+    padding: 2rem;
+    font-size: 11px;
+    color: var(--muted);
+    border-top: 1px solid var(--border);
+    margin-top: 1rem;
+  }
+
+  ::-webkit-scrollbar { width: 4px; height: 4px; }
+  ::-webkit-scrollbar-track { background: transparent; }
+  ::-webkit-scrollbar-thumb { background: var(--border2); border-radius: 99px; }
+</style>
+</head>
+<body>
+
+<header>
+  <div class="logo">
+    <img src="happy.webp" alt="logo" style="width:24px;height:24px;object-fit:contain;border-radius:4px;">
+    Net
+  </div>
+</header>
+
+<main>
+
+  <div>
+    <div class="page-title">Laporan Penjualan</div>
+    <div class="page-sub" id="last-updated">Memuat data...</div>
+  </div>
+
+  <div class="error-box" id="error-box">
+    ⚠ Gagal memuat data. Pastikan URL GAS sudah benar dan akses diset ke "Anyone".
+  </div>
+
+  <div class="stats-grid" id="stats-grid">
+    <div class="loading" style="grid-column:1/-1"><div class="spinner"></div></div>
+  </div>
+
+  <div class="section">
+    <div class="section-header">
+      <div class="section-title">
+        <div class="section-title-dot"></div>
+        Revenue Harian
+      </div>
+      <div class="section-badge" id="daily-count">—</div>
+    </div>
+    <div class="chart-wrap" id="chart-wrap">
+      <div class="spinner"></div>
+      <canvas id="chart-daily" style="display:none"></canvas>
+    </div>
+  </div>
+
+  <div class="section">
+    <div class="section-header">
+      <div class="section-title">
+        <div class="section-title-dot"></div>
+        Daftar Order
+      </div>
+      <div class="section-badge" id="orders-count">—</div>
+    </div>
+    <div class="table-wrap">
+      <div class="loading" id="orders-loading" style="padding:2rem 0">
+        <div class="spinner"></div>
+      </div>
+      <table id="orders-table" style="display:none">
+        <thead>
+          <tr>
+            <th>Order ID</th>
+            <th>Buyer</th>
+            <th>Produk</th>
+            <th>Qty</th>
+            <th>Harga</th>
+            <th>Revenue</th>
+            <th>Tanggal</th>
+          </tr>
+        </thead>
+        <tbody id="orders-body"></tbody>
+      </table>
+    </div>
+  </div>
+
+</main>
+
+<footer>
+  Data diambil langsung dari Google Sheets via Google Apps Script &nbsp;·&nbsp; Net Dashboard
+</footer>
+
+<script>
+  const BASE_URL = "https://script.google.com/macros/s/AKfycbwWQHMdnm81Ptynspi3fs-CcN8Y7k63UNWwmXkECqdyjD77_IhHkeo5GfV4IoVsXXCLXg/exec";
+
+  let chartInstance = null;
+
+  // Format angka biasa: 23304 → "23.304"
+  function fmt(num) {
+    return Number(num).toLocaleString("id-ID");
+  }
+
+  // Format Total Terjual: 1428000000 → "$ 1.428.000.000"
+  function fmtTotal(val) {
+    const num = Number(val);
+    if (!isNaN(num) && num > 0) {
+      return `$ ${num.toLocaleString("id-ID")}`;
+    }
+    // Jika sudah string (misal "1387 Juta Coins"), coba extract angka
+    const match = String(val).match(/[\d.]+/);
+    if (match) {
+      const extracted = Number(match[0].replace(/\./g, ""));
+      if (!isNaN(extracted)) return `$ ${extracted.toLocaleString("id-ID")}`;
+    }
+    return val;
+  }
+
+  // Format "Hari Penjualan ke-9" → "Hari ke-9"
+  function fmtHari(val) {
+    return String(val).replace("Penjualan ", "");
+  }
+
+  function showError() {
+    document.getElementById("error-box").style.display = "flex";
+  }
+
+  async function fetchData(type) {
+    const res = await fetch(`${BASE_URL}?type=${type}`, { redirect: "follow" });
+    return res.json();
+  }
+
+  async function loadSummary() {
+    const data = await fetchData("summary");
+    const grid = document.getElementById("stats-grid");
+
+    const cards = [
+      {
+        label: "Profit",
+        value: data["PROFIT"] ? `Rp ${fmt(Math.round(data["PROFIT"]))}` : "—"
+      },
+      {
+        label: "Avg Price / Juta",
+        value: data["AVG PRICE"] ? `Rp ${fmt(Math.round(data["AVG PRICE"]))}` : "—"
+      },
+      {
+        label: "Total Terjual",
+        value: fmtTotal(data["TOTAL SOLD"] || "—")
+      },
+      {
+        label: "Toko Berjalan",
+        value: data["Hari Toko Berjalan"] || "—"
+      },
+      {
+        label: "Hari Penjualan",
+        value: data["Hari Ada Penjualan"] ? fmtHari(data["Hari Ada Penjualan"]) : "—"
+      }
+    ];
+
+    grid.innerHTML = cards.map(c => `
+      <div class="stat-card">
+        <div class="stat-label">${c.label}</div>
+        <div class="stat-value">${c.value}</div>
+      </div>
+    `).join("");
+  }
+
+  async function loadDaily() {
+    const data = await fetchData("daily");
+
+    document.getElementById("daily-count").textContent = `${data.length} hari`;
+
+    const labels = data.map(d => d["Tanggal Penjualan"]);
+    const values = data.map(d => Number(d["Total Revenue Harian"]));
+
+    if (chartInstance) chartInstance.destroy();
+
+    const canvas = document.getElementById("chart-daily");
+    document.querySelector("#chart-wrap .spinner").style.display = "none";
+    canvas.style.display = "block";
+
+    chartInstance = new Chart(canvas.getContext("2d"), {
+      type: "bar",
+      data: {
+        labels,
+        datasets: [{
+          label: "Revenue",
+          data: values,
+          backgroundColor: "#4ade8030",
+          borderColor: "#4ade80",
+          borderWidth: 1.5,
+          borderRadius: 4,
+          hoverBackgroundColor: "#4ade8060"
+        }]
+      },
+      options: {
+        responsive: true,
+        maintainAspectRatio: false,
+        plugins: {
+          legend: { display: false },
+          tooltip: {
+            backgroundColor: "#2a2a2a",
+            borderColor: "#ffffff15",
+            borderWidth: 1,
+            titleColor: "#aaaaaa",
+            bodyColor: "#ffffff",
+            titleFont: { family: "'Plus Jakarta Sans', sans-serif", size: 11 },
+            bodyFont:  { family: "'Plus Jakarta Sans', sans-serif", size: 12 },
+            callbacks: { label: ctx => ` Rp ${fmt(ctx.parsed.y)}` }
+          }
+        },
+        scales: {
+          x: {
+            grid: { color: "#ffffff08" },
+            ticks: {
+              color: "#888888",
+              font: { family: "'Plus Jakarta Sans', sans-serif", size: 10 },
+              maxRotation: 45
+            }
+          },
+          y: {
+            grid: { color: "#ffffff08" },
+            ticks: {
+              color: "#888888",
+              font: { family: "'Plus Jakarta Sans', sans-serif", size: 10 },
+              callback: v => `Rp ${fmt(v)}`
+            }
+          }
+        }
+      }
+    });
+  }
+
+  async function loadOrders() {
+    const data = await fetchData("orders");
+
+    document.getElementById("orders-count").textContent = `${data.length} transaksi`;
+
+    const tbody = document.getElementById("orders-body");
+    tbody.innerHTML = data.map(o => `
+      <tr>
+        <td class="td-id">${String(o["Order ID"]).slice(-8)}</td>
+        <td class="td-buyer">${o["Buyer"] || "—"}</td>
+        <td><span class="badge badge-produk">${o["Product"] || "—"}</span></td>
+        <td>${o["Quantity"] || "—"}</td>
+        <td>Rp ${fmt(o["Price"])}</td>
+        <td class="td-revenue">Rp ${fmt(o["Final Revenue"])}</td>
+        <td class="td-date">${o["Transaction Time"] || "—"}</td>
+      </tr>
+    `).join("");
+
+    document.getElementById("orders-loading").style.display = "none";
+    document.getElementById("orders-table").style.display  = "table";
+  }
+
+  function setTimestamp() {
+    const now = new Date().toLocaleString("id-ID", {
+      day: "2-digit", month: "short", year: "numeric",
+      hour: "2-digit", minute: "2-digit"
+    });
+    document.getElementById("last-updated").textContent = `Terakhir diperbarui: ${now}`;
+  }
+
+  async function loadAll() {
+    try {
+      await Promise.all([loadSummary(), loadDaily(), loadOrders()]);
+      setTimestamp();
+    } catch (err) {
+      console.error(err);
+      showError();
+    }
+  }
+
+  loadAll();
+</script>
+</body>
+</html>
