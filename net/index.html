@@ -656,7 +656,16 @@
             bodyColor: "#ffffff",
             titleFont: { family: "'Plus Jakarta Sans', sans-serif", size: 11 },
             bodyFont:  { family: "'Plus Jakarta Sans', sans-serif", size: 12 },
-            callbacks: { label: ctx => ` Rp ${fmt(ctx.parsed.y)}` }
+            callbacks: {
+              title: function(items) {
+                const label = items[0].label;
+                const d = new Date(label);
+                return isNaN(d.getTime()) ? label : d.toLocaleDateString("id-ID", {
+                  day: "2-digit", month: "short", year: "numeric"
+                });
+              },
+              label: ctx => ` Rp ${fmt(ctx.parsed.y)}`
+            }
           }
         },
         scales: {
@@ -665,7 +674,14 @@
             ticks: {
               color: "#888888",
               font: { family: "'Plus Jakarta Sans', sans-serif", size: 10 },
-              maxRotation: 45
+              maxRotation: 45,
+              callback: function(value, index, ticks) {
+                const label = this.getLabelForValue(value);
+                const d = new Date(label);
+                return isNaN(d.getTime()) ? label : d.toLocaleDateString("id-ID", {
+                  day: "2-digit", month: "short", year: "numeric"
+                });
+              }
             }
           },
           y: {
