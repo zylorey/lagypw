@@ -56,7 +56,7 @@
   }
 
   main {
-    max-width: 1300px;
+    max-width: 1600px;
     margin: 0 auto;
     padding: 2rem;
     display: flex;
@@ -528,18 +528,14 @@
 </footer>
 
 <script>
-  const _P1 = "https://script.google.com/macros/s/AKfycbyt2wOI";
-  const _P2 = "HALEKSqmjs7Apg3SoHXEmBlRQhbFT_RsdsG";
-  const _P3 = "lgJEn7ROeKxNIJbR2r8S55Q/exec";
-
-  let BASE_URL = "";
-  let _sumCache = null;
-  let _dailyCache = null;
-  let _ordersCache = null;
+  const _P1 = "https://script.google.com/macros/s/";
+  const _P2 = "fycbzUL3";
+  const _P3 = "fpCS5W9w_kzqXwdu6ST6ReEV";
+  const _P4 = "kP8I4F-p_qjLelFl3yO9ohkVAuuerervFVkfcQ/exec";
 
   function buildURL(code) {
     const c = code.toUpperCase();
-    return _P1 + c[0] + c[1] + _P2 + code[2] + code[3] + _P3;
+    return _P1 + c[0] + c[1] + _P2 + c[2] + _P3 + c[3] + _P4;
   }
 
   let chartInstance = null;
@@ -564,45 +560,50 @@
     return val;
   }
 
-  // Format "Hari Penjualan ke-9" → "Hari ke-9"
+  function formatTanggal(isoStr) {
+    const d = new Date(isoStr);
+    const pad = n => String(n).padStart(2, '0');
+    return `${d.getFullYear()}-${pad(d.getMonth()+1)}-${pad(d.getDate())} ${pad(d.getHours())}:${pad(d.getMinutes())}:${pad(d.getSeconds())}`;
+  }
+
   function fmtHari(val) {
     return String(val).replace("Penjualan ", "");
+  }
+
+  function fmtTanggalLabel(isoStr) {
+    const d = new Date(isoStr);
+    return d.toLocaleDateString("id-ID", {
+      day: "2-digit", month: "short", year: "numeric"
+    });
   }
 
   function showError() {
     document.getElementById("error-box").style.display = "flex";
   }
 
-  async function fetchData(type) {
-    const res = await fetch(`${BASE_URL}?type=${type}`, { redirect: "follow" });
-    return res.json();
-  }
-
-  async function loadSummary() {
-    const data = _sumCache || await fetchData("summary");
-    _sumCache = null;
+  async function renderSummary(summary) {
     const grid = document.getElementById("stats-grid");
 
     const cards = [
       {
         label: "Profit",
-        value: data["PROFIT"] ? `Rp ${fmt(Math.round(data["PROFIT"]))}` : "—"
+        value: summary.profit ? `Rp ${fmt(Math.round(summary.profit))}` : "—"
       },
       {
-        label: "Avg Price / Juta",
-        value: data["AVG PRICE"] ? `Rp ${fmt(Math.round(data["AVG PRICE"]))}` : "—"
+        label: "Avg Price",
+        value: summary.avg_price ? `Rp ${fmt(Math.round(summary.avg_price))}` : "—"
       },
       {
         label: "Total Terjual",
-        value: fmtTotal(data["TOTAL SOLD"] || "—")
+        value: fmtTotal(summary.total_sold || "—")
       },
       {
         label: "Toko Berjalan",
-        value: data["Hari Toko Berjalan"] || "—"
+        value: summary.hari_toko_berjalan || "—"
       },
       {
         label: "Hari Penjualan",
-        value: data["Hari Ada Penjualan"] ? fmtHari(data["Hari Ada Penjualan"]) : "—"
+        value: summary.hari_ada_penjualan ? fmtHari(summary.hari_ada_penjualan) : "—"
       }
     ];
 
@@ -614,14 +615,11 @@
     `).join("");
   }
 
-  async function loadDaily() {
-    const data = _dailyCache || await fetchData("daily");
-    _dailyCache = null;
+  async function renderDaily(dailyReports) {
+    document.getElementById("daily-count").textContent = `${dailyReports.length} hari`;
 
-    document.getElementById("daily-count").textContent = `${data.length} hari`;
-
-    const labels = data.map(d => d["Tanggal Penjualan"]);
-    const values = data.map(d => Number(d["Total Revenue Harian"]));
+    const labels = dailyReports.map(d => d.tanggal_penjualan);
+    const values = dailyReports.map(d => Number(d.total_revenue_harian));
 
     if (chartInstance) chartInstance.destroy();
 
@@ -661,13 +659,7 @@
             titleFont: { family: "'Plus Jakarta Sans', sans-serif", size: 11 },
             bodyFont:  { family: "'Plus Jakarta Sans', sans-serif", size: 12 },
             callbacks: {
-              title: function(items) {
-                const label = items[0].label;
-                const d = new Date(label);
-                return isNaN(d.getTime()) ? label : d.toLocaleDateString("id-ID", {
-                  day: "2-digit", month: "short", year: "numeric"
-                });
-              },
+              title: items => fmtTanggalLabel(items[0].label),
               label: ctx => ` Rp ${fmt(ctx.parsed.y)}`
             }
           }
@@ -679,12 +671,11 @@
               color: "#888888",
               font: { family: "'Plus Jakarta Sans', sans-serif", size: 10 },
               maxRotation: 45,
-              callback: function(value, index, ticks) {
+              callback: function(value) {
                 const label = this.getLabelForValue(value);
                 const d = new Date(label);
-                return isNaN(d.getTime()) ? label : d.toLocaleDateString("id-ID", {
-                  day: "2-digit", month: "short", year: "numeric"
-                });
+                const pad = n => String(n).padStart(2, '0');
+                return isNaN(d.getTime()) ? label : `${pad(d.getDate())}/${pad(d.getMonth()+1)}`;
               }
             }
           },
@@ -701,24 +692,23 @@
     });
   }
 
-  async function loadOrders() {
-    const data = _ordersCache || await fetchData("orders");
-    _ordersCache = null;
-
-    document.getElementById("orders-count").textContent = `${data.length} transaksi`;
+  async function renderOrders(transactions) {
+    document.getElementById("orders-count").textContent = `${transactions.length} transaksi`;
 
     const tbody = document.getElementById("orders-body");
-    tbody.innerHTML = data.map(o => `
+    tbody.innerHTML = transactions.map(tx => {
+      const shortId = tx.order_id.toString().replace(/^OD0000001/, '');
+      return `
       <tr>
-        <td class="td-id">${String(o["Order ID"]).slice(-8)}</td>
-        <td class="td-buyer">${o["Buyer"] || "—"}</td>
-        <td><span class="badge badge-produk">${o["Product"] || "—"}</span></td>
-        <td>${o["Quantity"] || "—"}</td>
-        <td>Rp ${fmt(o["Price"])}</td>
-        <td class="td-revenue">Rp ${fmt(o["Final Revenue"])}</td>
-        <td class="td-date">${o["Transaction Time"] || "—"}</td>
+        <td class="td-id">${shortId}</td>
+        <td class="td-buyer">${tx.buyer || "—"}</td>
+        <td><span class="badge badge-produk">${tx.product || "—"}</span></td>
+        <td>${tx.quantity || "—"}</td>
+        <td>Rp ${fmt(tx.price)}</td>
+        <td class="td-revenue">Rp ${fmt(tx.final_revenue)}</td>
+        <td class="td-date">${formatTanggal(tx.transaction_time)}</td>
       </tr>
-    `).join("");
+    `}).join("");
 
     document.getElementById("orders-loading").style.display = "none";
     document.getElementById("orders-table").style.display  = "table";
@@ -732,9 +722,13 @@
     document.getElementById("last-updated").textContent = `Terakhir diperbarui: ${now}`;
   }
 
-  async function loadAll() {
+  async function loadAll(data) {
     try {
-      await Promise.all([loadSummary(), loadDaily(), loadOrders()]);
+      await Promise.all([
+        renderSummary(data.summary),
+        renderDaily(data.daily_reports),
+        renderOrders(data.transactions)
+      ]);
       setTimestamp();
     } catch (err) {
       console.error(err);
@@ -773,22 +767,14 @@
     try {
       const url = buildURL(this.value);
 
-      const sumP = fetch(url + "?type=summary", { redirect: "follow" });
-      const dP   = fetch(url + "?type=daily",   { redirect: "follow" });
-      const oP   = fetch(url + "?type=orders",  { redirect: "follow" });
+      const res = await fetch(url, { redirect: "follow" });
+      if (!res.ok) throw null;
 
-      const sumRes = await sumP;
-      if (!sumRes.ok) throw null;
+      const data = await res.json();
+      if (!data || typeof data !== "object" || !("summary" in data)) throw null;
 
-      const sumData = await sumRes.json();
-      if (!sumData || typeof sumData !== "object" || !("PROFIT" in sumData)) throw null;
-
-      _sumCache = sumData;
-      _dailyCache = await (await dP).json();
-      _ordersCache = await (await oP).json();
-      BASE_URL = url;
       pwOverlay.classList.add("pw-hidden");
-      loadAll();
+      loadAll(data);
     } catch {
       pwLoader.style.display = "none";
       pwSlotsWrap.style.display = "flex";
