@@ -5,7 +5,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Net</title>
 <link rel="icon" href="happy.webp" type="image/webp">
-<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/echarts/5.4.3/echarts.min.js"></script>
 <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
 <style>
   :root {
@@ -186,20 +186,17 @@
   }
 
   .chart-wrap {
-    padding: 1.5rem;
-    height: 240px;
+    padding: 1rem 1.5rem 0.5rem;
+    height: 300px;
     position: relative;
     display: flex;
     align-items: center;
     justify-content: center;
   }
 
-  .chart-wrap canvas {
-    position: absolute;
-    top: 0; left: 0;
-    width: 100% !important;
-    height: 100% !important;
-    padding: 1.5rem;
+  #chart-daily {
+    width: 100%;
+    height: 100%;
   }
 
   .table-wrap { overflow-x: auto; }
@@ -414,7 +411,7 @@
     .section-header { padding: 0.75rem 1rem; }
     .section-title { font-size: 0.75rem; }
 
-    .chart-wrap { height: 180px; }
+    .chart-wrap { height: 220px; }
 
     thead th,
     tbody td { padding: 8px 10px; }
@@ -428,7 +425,7 @@
   @media (max-width: 400px) {
     .stats-grid { grid-template-columns: 1fr; }
 
-    .chart-wrap { height: 160px; }
+    .chart-wrap { height: 200px; }
 
     .page-title { font-size: 1.2rem; }
   }
@@ -487,8 +484,8 @@
       <div class="section-badge" id="daily-count">—</div>
     </div>
     <div class="chart-wrap" id="chart-wrap">
-      <div class="spinner"></div>
-      <canvas id="chart-daily" style="display:none"></canvas>
+      <div class="spinner" id="chart-spinner"></div>
+      <div id="chart-daily" style="display:none;width:100%;height:100%;"></div>
     </div>
   </div>
 
@@ -618,78 +615,118 @@
   async function renderDaily(dailyReports) {
     document.getElementById("daily-count").textContent = `${dailyReports.length} hari`;
 
-    const labels = dailyReports.map(d => d.tanggal_penjualan);
+    const labels = dailyReports.map(d => {
+      const dt = new Date(d.tanggal_penjualan);
+      const pad = n => String(n).padStart(2, '0');
+      return isNaN(dt.getTime())
+        ? d.tanggal_penjualan
+        : `${pad(dt.getDate())}/${pad(dt.getMonth()+1)}`;
+    });
+    const fullLabels = dailyReports.map(d => fmtTanggalLabel(d.tanggal_penjualan));
     const values = dailyReports.map(d => Number(d.total_revenue_harian));
 
-    if (chartInstance) chartInstance.destroy();
+    if (chartInstance) chartInstance.dispose();
 
-    const canvas = document.getElementById("chart-daily");
-    document.querySelector("#chart-wrap .spinner").style.display = "none";
-    canvas.style.display = "block";
+    const el = document.getElementById("chart-daily");
+    document.getElementById("chart-spinner").style.display = "none";
+    el.style.display = "block";
 
-    chartInstance = new Chart(canvas.getContext("2d"), {
-      type: "bar",
-      data: {
-        labels,
-        datasets: [{
-          label: "Revenue",
-          data: values,
-          backgroundColor: "#4ade8030",
+    chartInstance = echarts.init(el, null, { renderer: "canvas" });
+
+    // Default: show last 30 bars (or all if fewer)
+    const total = dailyReports.length;
+    const startPct = total > 30 ? Math.round((total - 30) / total * 100) : 0;
+
+    chartInstance.setOption({
+      backgroundColor: "transparent",
+      grid: { top: 16, right: 20, bottom: 60, left: 80 },
+      xAxis: {
+        type: "category",
+        data: labels,
+        axisLine: { lineStyle: { color: "#ffffff0d" } },
+        axisTick: { show: false },
+        axisLabel: {
+          color: "#888888",
+          fontFamily: "'Plus Jakarta Sans', sans-serif",
+          fontSize: 10,
+          rotate: 0,
+          interval: "auto",
+          hideOverlap: true
+        },
+        splitLine: { show: false }
+      },
+      yAxis: {
+        type: "value",
+        axisLine: { show: false },
+        axisTick: { show: false },
+        axisLabel: {
+          color: "#888888",
+          fontFamily: "'Plus Jakarta Sans', sans-serif",
+          fontSize: 10,
+          formatter: v => `Rp ${fmt(v)}`
+        },
+        splitLine: { lineStyle: { color: "#ffffff08" } }
+      },
+      dataZoom: [
+        {
+          type: "slider",
+          start: startPct,
+          end: 100,
+          height: 24,
+          bottom: 10,
+          borderColor: "#ffffff0d",
+          backgroundColor: "#2a2a2a",
+          fillerColor: "#4ade8018",
+          handleStyle: { color: "#4ade80", borderColor: "#4ade80" },
+          moveHandleStyle: { color: "#4ade8060" },
+          selectedDataBackground: {
+            lineStyle: { color: "#4ade80" },
+            areaStyle: { color: "#4ade8020" }
+          },
+          dataBackground: {
+            lineStyle: { color: "#ffffff15" },
+            areaStyle: { color: "#ffffff08" }
+          },
+          textStyle: { color: "#888888", fontSize: 9 },
+          brushSelect: false
+        },
+        {
+          type: "inside",
+          start: startPct,
+          end: 100,
+          zoomOnMouseWheel: true,
+          moveOnMouseMove: true
+        }
+      ],
+      tooltip: {
+        trigger: "axis",
+        axisPointer: { type: "shadow", shadowStyle: { color: "#ffffff06" } },
+        backgroundColor: "#2a2a2a",
+        borderColor: "#ffffff15",
+        borderWidth: 1,
+        textStyle: { color: "#ffffff", fontFamily: "'Plus Jakarta Sans', sans-serif", fontSize: 12 },
+        formatter: params => {
+          const i = params[0].dataIndex;
+          return `<span style="color:#888;font-size:11px">${fullLabels[i]}</span><br/>Rp ${fmt(params[0].value)}`;
+        }
+      },
+      series: [{
+        type: "bar",
+        data: values,
+        itemStyle: {
+          color: "#4ade8030",
           borderColor: "#4ade80",
           borderWidth: 1.5,
-          borderRadius: 4,
-          hoverBackgroundColor: "#4ade8060"
-        }]
-      },
-      options: {
-        responsive: true,
-        maintainAspectRatio: false,
-        interaction: {
-          mode: 'index',
-          intersect: false,
+          borderRadius: [4, 4, 0, 0]
         },
-        plugins: {
-          legend: { display: false },
-          tooltip: {
-            backgroundColor: "#2a2a2a",
-            borderColor: "#ffffff15",
-            borderWidth: 1,
-            titleColor: "#aaaaaa",
-            bodyColor: "#ffffff",
-            titleFont: { family: "'Plus Jakarta Sans', sans-serif", size: 11 },
-            bodyFont:  { family: "'Plus Jakarta Sans', sans-serif", size: 12 },
-            callbacks: {
-              title: items => fmtTanggalLabel(items[0].label),
-              label: ctx => ` Rp ${fmt(ctx.parsed.y)}`
-            }
-          }
+        emphasis: {
+          itemStyle: { color: "#4ade8060" }
         },
-        scales: {
-          x: {
-            grid: { color: "#ffffff08" },
-            ticks: {
-              color: "#888888",
-              font: { family: "'Plus Jakarta Sans', sans-serif", size: 10 },
-              maxRotation: 45,
-              callback: function(value) {
-                const label = this.getLabelForValue(value);
-                const d = new Date(label);
-                const pad = n => String(n).padStart(2, '0');
-                return isNaN(d.getTime()) ? label : `${pad(d.getDate())}/${pad(d.getMonth()+1)}`;
-              }
-            }
-          },
-          y: {
-            grid: { color: "#ffffff08" },
-            ticks: {
-              color: "#888888",
-              font: { family: "'Plus Jakarta Sans', sans-serif", size: 10 },
-              callback: v => `Rp ${fmt(v)}`
-            }
-          }
-        }
-      }
+        barMaxWidth: 40
+      }]
     });
+
+    window.addEventListener("resize", () => chartInstance && chartInstance.resize());
   }
 
   async function renderOrders(transactions) {
